@@ -1,6 +1,8 @@
 ﻿#include "pch.h"
 #include <iostream>
 #include "CorePch.h"
+
+
 class CDataMP// : public MemoryPool<CDataMP>
 {
 public:
@@ -11,6 +13,8 @@ public:
 	int32 c = 3;
 };
 
+MemoryPool MP(sizeof(CDataMP), 1024 * 1024);
+
 int main()
 {
 	cout << "Start!!" << endl;
@@ -19,8 +23,12 @@ int main()
 	{
 		//CDataMP *pData = new CDataMP();
 		//delete pData;
-		auto a = MakeShared<CDataMP>();
-		//make_shared<CDataMP>();
+		//auto a = MakeShared<CDataMP>();
+		MemoryPool::MEMORY_DESC *pMD = MP.Alloc();
+
+		BYTE *pBuffer = pMD->pBuffer;
+		CDataMP *pData = new(pBuffer) CDataMP;
+		MP.Release(pMD);
 	}
 	chrono::system_clock::time_point end = chrono::system_clock::now();
 	cout << "끝: " << end.time_since_epoch().count() - start.time_since_epoch().count() << endl;

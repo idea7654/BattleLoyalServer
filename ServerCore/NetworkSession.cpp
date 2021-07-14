@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "NetworkSession.h"
-
+#pragma warning(disable:4996)
 DWORD WINAPI ReliableUdpThreadCallback(void* parameter)
 {
 	NetworkSession *Owner = (NetworkSession*)parameter;

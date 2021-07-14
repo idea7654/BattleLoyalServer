@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "CircleQueue.h"
-
+#include <stdio.h>
+#pragma warning(disable:4996)
 BYTE * CircleQueue::Push(void * object, BYTE * data, DWORD dataLength, char * remoteAddress, uint16 remotePort)
 {
 	//µø±‚»≠
@@ -17,10 +18,10 @@ BYTE * CircleQueue::Push(void * object, BYTE * data, DWORD dataLength, char * re
 	mQueue[TempTail].RemotePort = remotePort;
 
 	memset(mQueue[TempTail].RemoteAddress, 0, sizeof(mQueue[TempTail].RemoteAddress));
-	::strncpy(mQueue[TempTail].RemoteAddress, remoteAddress, sizeof(mQueue[TempTail].RemoteAddress));
+	strncpy_s(mQueue[TempTail].RemoteAddress, remoteAddress, sizeof(mQueue[TempTail].RemoteAddress));
 
 	memset(mQueue[TempTail].Data, 0, sizeof(mQueue[TempTail].Data));
-	::memcpy(mQueue[TempTail].Data, data, dataLength);
+	memcpy(mQueue[TempTail].Data, data, dataLength);
 
 	mQueueTail = TempTail;
 

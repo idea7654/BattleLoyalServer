@@ -1,6 +1,6 @@
 #pragma once
 
-typedef struct QUEUE_DATA
+struct QUEUE_DATA
 {
 	void	*Object;
 	BYTE	Data[MAX_BUFFER_LENGTH];
@@ -30,6 +30,7 @@ public:
 	bool Begin()
 	{
 		memset(mQueue, 0, sizeof(mQueue));
+		return true;
 	}
 
 	bool End() { return true; }
