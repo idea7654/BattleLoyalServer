@@ -194,6 +194,133 @@ void NetworkSession::ReliableUdpThreadCallback()
 	}
 }
 
+bool NetworkSession::InitializeReadFromForIOCP()
+{
+	//동기화
+
+	if (!mSocket)
+		return false;
+
+	WSABUF wsaBuf;
+	DWORD ReadBytes = 0;
+	DWORD ReadFlag = 0;
+	int32 RemoteAddressInfoSize = sizeof(mUdpRemoteInfo);
+
+	wsaBuf.buf = (char*)mReadBuffer;
+	wsaBuf.len = MAX_BUFFER_LENGTH;
+
+	int32 ReturnValue = WSARecvFrom(mSocket, &wsaBuf, 1, &ReadBytes, &ReadFlag,
+		(SOCKADDR*)&mUdpRemoteInfo, &RemoteAddressInfoSize, &mReadOverlapped.Overlapped, NULL);
+
+	if (ReturnValue == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING && WSAGetLastError() != WSAEWOULDBLOCK)
+	{
+		End();
+		return false;
+	}
+	return true;
+}
+
+bool NetworkSession::ReadFromForIOCP(char * remoteAddress, uint16 & remotePort, BYTE * data, DWORD &dataLength)
+{
+	//동기화
+	if (!mSocket)
+		return false;
+
+	if (!data || dataLength <= 0)
+		return false;
+
+	memcpy(data, mReadBuffer, dataLength);
+	strcpy(remoteAddress, inet_ntoa(mUdpRemoteInfo.sin_addr));
+	remotePort = ntohs(mUdpRemoteInfo.sin_port);
+
+	uint16 Ack = 0;
+	memcpy(&Ack, mReadBuffer, sizeof(uint16));
+
+	if (Ack == 9999)
+	{
+		SetEvent(mReliableUdpWriteCompleteEvent);
+		return false;
+	}
+	else {
+		Ack = 9999;
+		WriteTo2(remoteAddress, remotePort, (BYTE*)&Ack, sizeof(uint16));
+	}
+
+	return true;
+}
+
+bool NetworkSession::ReadFromForEventSelect(char * remoteAddress, uint16 & remotePort, BYTE * data, DWORD & dataLength)
+{
+	//동기화 개체
+
+	if (!mSocket)
+		return false;
+	if (!data)
+		return false;
+	if (!remoteAddress || remotePort <= 0 || dataLength <= 0)
+		return false;
+
+	WSABUF wsaBuf;
+	DWORD ReadBytes = 0;
+	DWORD ReadFlag = 0;
+	int32 RemoteAddressInfoSize = sizeof(mUdpRemoteInfo);
+
+	wsaBuf.buf = (char*)mReadBuffer;
+	wsaBuf.len = MAX_BUFFER_LENGTH;
+
+	int32 ReturnValue = WSARecvFrom(mSocket, &wsaBuf, 1, &ReadBytes, &ReadFlag,
+		(SOCKADDR*)&mUdpRemoteInfo, &RemoteAddressInfoSize, &mReadOverlapped.Overlapped, NULL);
+
+	if (ReturnValue == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING && WSAGetLastError() != WSAEWOULDBLOCK)
+	{
+		End();
+		return false;
+	}
+
+	memcpy(data, mReadBuffer, dataLength);
+	strcpy(remoteAddress, inet_ntoa(mUdpRemoteInfo.sin_addr));
+	remotePort = ntohs(mUdpRemoteInfo.sin_port);
+
+	uint16 Ack = 0;
+	memcpy(&Ack, mReadBuffer, sizeof(uint16));
+
+	if (Ack == 9999)
+	{
+		SetEvent(mReliableUdpWriteCompleteEvent);
+		return false;
+	}
+	else {
+		Ack = 9999;
+		WriteTo2(remoteAddress, remotePort, (BYTE*)&Ack, sizeof(uint16));
+	}
+	return true;
+}
+
+bool NetworkSession::Write(BYTE * data, DWORD dataLength)
+{
+	//동기화
+
+	if (!mSocket)
+		return false;
+
+	if (!data || dataLength <= 0)
+		return false;
+
+	WSABUF wsaBuf;
+	DWORD WriteBytes = 0;
+	DWORD WriteFlag = 0;
+	wsaBuf.buf = (char*)data;
+	wsaBuf.len = dataLength;
+
+	int32 ReturnValue = WSASend(mSocket, &wsaBuf, 1, &WriteBytes, WriteFlag, &mWriteOverlapped.Overlapped, NULL);
+	if (ReturnValue == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING && WSAGetLastError() != WSAEWOULDBLOCK)
+	{
+		End();
+		return false;
+	}
+	return true;
+}
+
 bool NetworkSession::WriteTo(char * remoteAddress, uint16 remotePort, BYTE * data, DWORD dataLength)
 {
 	//동기화

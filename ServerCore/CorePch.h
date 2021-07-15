@@ -34,5 +34,6 @@ using namespace std;
 #include "MemoryManager.h"
 
 #include "NetworkSession.h"
+#include "PacketSession.h"
 
 #include "Log.h"

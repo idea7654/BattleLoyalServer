@@ -28,6 +28,26 @@ BYTE * CircleQueue::Push(void * object, BYTE * data, DWORD dataLength, char * re
 	return mQueue[TempTail].Data;
 }
 
+BYTE * CircleQueue::Push(void * object, BYTE * data, DWORD dataLength)
+{
+	//동기화
+
+	if (!object || !data)
+		return NULL;
+
+	DWORD TempTail = (mQueueTail + 1) % MAX_QUEUE_LENGTH;
+
+	if (TempTail == mQueueHead)
+		return NULL;
+
+	mQueue[TempTail].Object			= object;
+	mQueue[TempTail].DataLength		= dataLength;
+
+	memcpy(mQueue[TempTail].Data, data, dataLength);
+	mQueueTail = TempTail;
+	return mQueue[TempTail].Data;
+}
+
 
 bool CircleQueue::Pop(void ** object, BYTE * data, DWORD & dataLength, char* remoteAddress, uint16 & remotePort)
 {
@@ -50,5 +70,17 @@ bool CircleQueue::Pop(void ** object, BYTE * data, DWORD & dataLength, char* rem
 
 	mQueueHead = TempHead;
 
+	return true;
+}
+
+bool CircleQueue::Pop()
+{
+	//동기화
+
+	if (mQueueHead == mQueueTail)
+		return false;
+
+	DWORD TempHead = (mQueueHead + 1) % MAX_QUEUE_LENGTH;
+	mQueueHead = TempHead;
 	return true;
 }

@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "MemoryPool.h"
-
+/*
 MemoryPool::MemoryPool(size_t PoolSize, size_t MemorySize)
 {
 	for (size_t i = 0; i < PoolSize; ++i)
@@ -59,3 +59,4 @@ void MemoryPool::Release(MEMORY_DESC * pMD)
 	freeMemIndex = pMD->Index;
 	SetEvent(hEvent);
 }
+*/

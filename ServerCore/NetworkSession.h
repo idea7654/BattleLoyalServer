@@ -26,6 +26,11 @@ public:
 
 	void			ReliableUdpThreadCallback();
 
+	bool			InitializeReadFromForIOCP();
+	bool			ReadFromForIOCP(char* remoteAddress, uint16 &remotePort, BYTE *data, DWORD &dataLength);
+	bool			ReadFromForEventSelect(char* remoteAddress, uint16 &remotePort, BYTE* data, DWORD &dataLength);
+
+	bool			Write(BYTE *data, DWORD dataLength);
 	bool			WriteTo(char* remoteAddress, uint16 remotePort, BYTE *data, DWORD dataLength);
 	bool			WriteTo2(char* remoteAddress, uint16 remotePort, BYTE *data, DWORD dataLength);
 private:

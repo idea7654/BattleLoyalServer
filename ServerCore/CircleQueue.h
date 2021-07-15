@@ -45,6 +45,7 @@ public:
 		return true;
 	}
 	BYTE* Push(void *object, BYTE *data, DWORD dataLength, char* remoteAddress, uint16 remotePort);
+	BYTE* Push(void *object, BYTE* data, DWORD dataLength);
 
 	bool Pop(QUEUE_DATA& data)
 	{
@@ -58,6 +59,7 @@ public:
 	}
 
 	bool Pop(void **object, BYTE *data, DWORD &dataLength, char* remoteAddress, uint16 &remotePort);
+	bool Pop();
 	bool IsEmpty()
 	{
 		if (mQueueHead == mQueueTail)

@@ -1,5 +1,5 @@
 #pragma once
-/*
+
 const int ALLOC_BLOCK_SIZE = 50;
 template <typename T>
 class MemoryPool
@@ -14,6 +14,7 @@ public:
 		if (!mFreePointer)
 			allocBlock();
 		BYTE* ReturnPointer = mFreePointer;
+		//printf("Memory : %x \n", ReturnPointer);
 		mFreePointer = *reinterpret_cast<BYTE**>(ReturnPointer);
 		return reinterpret_cast<void*>(ReturnPointer);
 	}
@@ -38,7 +39,7 @@ private:
 			*Current = Next;
 			Current = reinterpret_cast<BYTE**>(Next);
 		}
-		*Current = 0;
+		*Current = nullptr;
 	}
 
 public:
@@ -49,8 +50,8 @@ protected:
 };
 template <typename T>
 BYTE* MemoryPool<T>::mFreePointer;
-*/
 
+/*
 class MemoryPool
 {
 public:
@@ -75,3 +76,4 @@ public:
 	MEMORY_DESC			*Alloc();
 	void				Release(MEMORY_DESC *pMD);
 };
+*/

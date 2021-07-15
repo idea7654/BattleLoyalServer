@@ -1,6 +1,6 @@
 #pragma once
 #include "MemoryPool.h"
-/*
+#include <new>
 template <typename T, typename... Args>
 T* Attach()
 {
@@ -22,7 +22,7 @@ shared_ptr<T> MakeShared()
 {
 	return shared_ptr<T>{ Attach<T>(forward<Args>(args)...), Detatch<T> };
 }
-*/
+
 
 /*
 template <typename T, typename... Args>
