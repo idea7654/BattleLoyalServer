@@ -17,25 +17,25 @@ void Iocp::WorkerThreadCallback()
 	OVERLAPPED *Overlapped			= NULL;
 	_OVERLAPPED_EX *OverlappedEx	= NULL;
 	void *Object					= NULL;
-
+	
 	while (true)
 	{
 		SetEvent(mStartHandle);
-		Successed = GetQueuedCompletionStatus(mHandle, &NumberOfByteTransfered, (DWORD*)CompletionKey, &Overlapped, INFINITE);
-
+		Successed = GetQueuedCompletionStatus(mHandle, &NumberOfByteTransfered, (PULONG_PTR)CompletionKey, &Overlapped, INFINITE);
+		
 		if (!CompletionKey)
 			return; //by End()
 
 		OverlappedEx = (_OVERLAPPED_EX*)Overlapped;
 		Object = OverlappedEx->Object;
-
+		
+		
 		if (!Successed || (Successed && !NumberOfByteTransfered))
 		{
 			if (OverlappedEx->IoType == IO_TYPE::IO_ACCEPT)
 				OnIoConnected(Object);
 			else
 				OnIoDisconnected(Object);
-
 			continue;
 		}
 
@@ -58,7 +58,7 @@ Iocp::Iocp()
 	mStartHandle = NULL;
 }
 
-bool Iocp::Begin()
+bool Iocp::BeginIocp()
 {
 	mHandle = NULL;
 
@@ -70,14 +70,13 @@ bool Iocp::Begin()
 
 	if (!mHandle)
 		return false;
-
 	mStartHandle = CreateEvent(0, false, false, 0);
 	if (mStartHandle == NULL)
 	{
 		End();
 		return false;
 	}
-	for (DWORD i = 0; i < mThreadCount; i++)
+	for (int32 i = 0; i < mThreadCount; i++)
 	{
 		HANDLE workerThread = CreateThread(NULL, 0, ::WorkerThreadCallback, this, 0, NULL);
 		mThreadVec.push_back(workerThread);
@@ -111,10 +110,12 @@ bool Iocp::End()
 bool Iocp::RegisterSocketToIocp(SOCKET socket, ULONG_PTR completionKey)
 {
 	if (!socket || !completionKey)
+	{
+		cout << "¹º°¡°¡¾øÀ½!" << endl;
 		return false;
-
+	}
 	mHandle = CreateIoCompletionPort((HANDLE)socket, mHandle, completionKey, 0);
-	return false;
+	return true;
 }
 
 

@@ -3,10 +3,10 @@ class Iocp
 {
 public:
 	Iocp();
-	~Iocp();
+	~Iocp() {};
 
 public:
-	bool Begin();
+	bool BeginIocp();
 	bool End();
 
 	bool RegisterSocketToIocp(SOCKET socket, ULONG_PTR completionKey);

@@ -18,7 +18,7 @@ class NetworkSession
 {
 public:
 	NetworkSession();
-	~NetworkSession();
+	~NetworkSession() {};
 
 	bool			Begin();
 	bool			End();
@@ -33,6 +33,8 @@ public:
 	bool			Write(BYTE *data, DWORD dataLength);
 	bool			WriteTo(char* remoteAddress, uint16 remotePort, BYTE *data, DWORD dataLength);
 	bool			WriteTo2(char* remoteAddress, uint16 remotePort, BYTE *data, DWORD dataLength);
+
+	SOCKET			GetSocket();
 private:
 	_OVERLAPPED_EX	mAcceptOverlapped;
 	_OVERLAPPED_EX	mReadOverlapped;
@@ -41,7 +43,7 @@ private:
 	BYTE			mReadBuffer[MAX_BUFFER_LENGTH];
 	SOCKADDR_IN		mUdpRemoteInfo;
 
-	SOCKET mSocket;
+	SOCKET			mSocket;
 
 	HANDLE			mReliableUdpThreadHandle;
 	HANDLE			mReliableUdpThreadStartupEvent;

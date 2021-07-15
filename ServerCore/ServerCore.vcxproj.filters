@@ -13,6 +13,9 @@
     <Filter Include="Utils">
       <UniqueIdentifier>{7dd5313c-fae0-4df9-b49f-efec4c7813e7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Thread">
+      <UniqueIdentifier>{9ea3199e-5eb2-4e8c-b48d-4152fe1320fd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -48,6 +51,9 @@
     <ClInclude Include="Iocp.h">
       <Filter>Network</Filter>
     </ClInclude>
+    <ClInclude Include="Lock.h">
+      <Filter>Thread</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -73,6 +79,9 @@
     </ClCompile>
     <ClCompile Include="Iocp.cpp">
       <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Lock.cpp">
+      <Filter>Thread</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

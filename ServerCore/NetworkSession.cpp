@@ -58,7 +58,7 @@ bool NetworkSession::End()
 {
 	//동기화
 
-	if (!mSocket)
+	if (mSocket)
 		return false;
 
 	shutdown(mSocket, SD_BOTH);
@@ -100,10 +100,12 @@ bool NetworkSession::UdpBind(uint16 port)
 	RemoteAddressInfo.sin_port = htons(port);
 	RemoteAddressInfo.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
 
-	mSocket = WSASocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, NULL, 0, WSA_FLAG_OVERLAPPED);
+	mSocket = ::WSASocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, NULL, 0, WSA_FLAG_OVERLAPPED);
 	if (mSocket == INVALID_SOCKET)
+	{
+		cout << "Socket Init Error" << endl;
 		return false;
-
+	}
 	if (::bind(mSocket, (SOCKADDR*)&RemoteAddressInfo, sizeof(SOCKADDR_IN)) == SOCKET_ERROR)
 	{
 		End();
@@ -235,7 +237,6 @@ bool NetworkSession::ReadFromForIOCP(char * remoteAddress, uint16 & remotePort, 
 
 	uint16 Ack = 0;
 	memcpy(&Ack, mReadBuffer, sizeof(uint16));
-
 	if (Ack == 9999)
 	{
 		SetEvent(mReliableUdpWriteCompleteEvent);
@@ -374,6 +375,13 @@ bool NetworkSession::WriteTo2(char * remoteAddress, uint16 remotePort, BYTE * da
 		return false;
 	}
 	return true;
+}
+
+SOCKET NetworkSession::GetSocket()
+{
+	//동기화
+
+	return mSocket;
 }
 
 

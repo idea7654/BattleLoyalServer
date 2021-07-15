@@ -35,5 +35,8 @@ using namespace std;
 
 #include "NetworkSession.h"
 #include "PacketSession.h"
+#include "Iocp.h"
 
 #include "Log.h"
+#include "Lock.h"
+#include "CoreGlobal.h"
