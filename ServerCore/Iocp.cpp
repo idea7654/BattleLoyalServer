@@ -9,7 +9,7 @@ DWORD WINAPI WorkerThreadCallback(void* parameter)
 	return 0;
 }
 
-void Iocp::WorkerThreadCallback()
+void Iocp::WorkerThreadCallback() //데이터 받을 작업스레드
 {
 	bool Successed					= false;
 	DWORD NumberOfByteTransfered	= 0;
@@ -17,19 +17,17 @@ void Iocp::WorkerThreadCallback()
 	OVERLAPPED *Overlapped			= NULL;
 	_OVERLAPPED_EX *OverlappedEx	= NULL;
 	void *Object					= NULL;
-	
 	while (true)
 	{
 		SetEvent(mStartHandle);
-		Successed = GetQueuedCompletionStatus(mHandle, &NumberOfByteTransfered, (PULONG_PTR)CompletionKey, &Overlapped, INFINITE);
+		Successed = GetQueuedCompletionStatus(mHandle, &NumberOfByteTransfered, (PULONG_PTR) &CompletionKey, &Overlapped, INFINITE);
 		
 		if (!CompletionKey)
 			return; //by End()
 
 		OverlappedEx = (_OVERLAPPED_EX*)Overlapped;
 		Object = OverlappedEx->Object;
-		
-		
+
 		if (!Successed || (Successed && !NumberOfByteTransfered))
 		{
 			if (OverlappedEx->IoType == IO_TYPE::IO_ACCEPT)
@@ -38,7 +36,6 @@ void Iocp::WorkerThreadCallback()
 				OnIoDisconnected(Object);
 			continue;
 		}
-
 		switch (OverlappedEx->IoType)
 		{
 		case IO_TYPE::IO_READ:
@@ -111,10 +108,12 @@ bool Iocp::RegisterSocketToIocp(SOCKET socket, ULONG_PTR completionKey)
 {
 	if (!socket || !completionKey)
 	{
-		cout << "뭔가가없음!" << endl;
 		return false;
 	}
 	mHandle = CreateIoCompletionPort((HANDLE)socket, mHandle, completionKey, 0);
+
+	if (!mHandle)
+		return false;
 	return true;
 }
 

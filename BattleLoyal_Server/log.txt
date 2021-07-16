@@ -1,0 +1,1 @@
+[FATAL] Jul 16 2021 17 12 33 [main:25] : fatal

@@ -51,8 +51,11 @@
     <ClInclude Include="Iocp.h">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="Lock.h">
+    <ClInclude Include="RWLock.h">
       <Filter>Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="CoreMacro.h">
+      <Filter>Main</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -80,8 +83,11 @@
     <ClCompile Include="Iocp.cpp">
       <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="Lock.cpp">
+    <ClCompile Include="RWLock.cpp">
       <Filter>Thread</Filter>
+    </ClCompile>
+    <ClCompile Include="Log.cpp">
+      <Filter>Utils</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -43,24 +43,23 @@ bool PacketSession::GetPacket(char * remoteAddress, uint16 remotePort, DWORD & p
 	//동기화
 	if (!packet)
 		return false;
-
+	//여기는 Protocol에 맞지않으면 인식 x
 	if (mRemainLength < sizeof(DWORD))
 		return false;
 
 	int32 PacketLength = 0;
 	memcpy(&PacketLength, mPacketBuffer, sizeof(int32));
-
+	
 	if (PacketLength > MAX_BUFFER_LENGTH || PacketLength <= 0)
 	{
 		mRemainLength = 0;
 		return false;
 	}
-
+	
 	if (PacketLength <= mRemainLength)
 	{
 		DWORD PacketNumber = 0;
 		DWORD Protocol = 0;
-
 		memcpy(&PacketNumber, mPacketBuffer + sizeof(DWORD), sizeof(DWORD));//패킷번호
 		memcpy(&Protocol, mPacketBuffer + sizeof(DWORD) + sizeof(DWORD), sizeof(DWORD)); //프로토콜 번호
 
@@ -100,11 +99,11 @@ bool PacketSession::GetPacket(char * remoteAddress, uint16 remotePort, DWORD & p
 		ReadPacketInfo.PacketNumber = PacketNumber;
 		ReadPacketInfo.RemotePort = remotePort;
 		strcpy(ReadPacketInfo.RemoteAddress, remoteAddress);
-
+		
 		mLastReadPacketInfoVectorForUdp.push_back(ReadPacketInfo);
 		return true;
 	}
-
+	
 	return false;
 }
 

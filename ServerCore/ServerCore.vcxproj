@@ -157,15 +157,16 @@
   <ItemGroup>
     <ClInclude Include="CircleQueue.h" />
     <ClInclude Include="CoreGlobal.h" />
+    <ClInclude Include="CoreMacro.h" />
     <ClInclude Include="CorePch.h" />
     <ClInclude Include="Iocp.h" />
-    <ClInclude Include="Lock.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="MemoryManager.h" />
     <ClInclude Include="MemoryPool.h" />
     <ClInclude Include="NetworkSession.h" />
     <ClInclude Include="PacketSession.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="RWLock.h" />
     <ClInclude Include="Types.h" />
   </ItemGroup>
   <ItemGroup>
@@ -173,7 +174,7 @@
     <ClCompile Include="CoreGlobal.cpp" />
     <ClCompile Include="CorePch.cpp" />
     <ClCompile Include="Iocp.cpp" />
-    <ClCompile Include="Lock.cpp" />
+    <ClCompile Include="Log.cpp" />
     <ClCompile Include="MemoryPool.cpp" />
     <ClCompile Include="NetworkSession.cpp" />
     <ClCompile Include="PacketSession.cpp" />
@@ -183,6 +184,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="RWLock.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

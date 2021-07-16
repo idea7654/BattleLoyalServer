@@ -30,13 +30,14 @@ using namespace std;
 #include <MSWSock.h>
 #include <WS2tcpip.h>
 
+#include "CoreMacro.h"
 #include "CircleQueue.h"
 #include "MemoryManager.h"
+#include "RWLock.h"
 
 #include "NetworkSession.h"
 #include "PacketSession.h"
 #include "Iocp.h"
 
 #include "Log.h"
-#include "Lock.h"
 #include "CoreGlobal.h"

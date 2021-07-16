@@ -52,6 +52,7 @@ private:
 	HANDLE			mReliableUdpWriteCompleteEvent;
 
 	CircleQueue		mReliableWriteQueue;
+	RWLock			mLock;
 
 	bool			mIsReliableUdpSending;
 };

@@ -37,6 +37,7 @@ NetworkSession::NetworkSession()
 bool NetworkSession::Begin()
 {
 	//Lock넣기
+	mLock.EnterWriteLock();
 	if (mSocket)
 		return false;
 
@@ -50,14 +51,15 @@ bool NetworkSession::Begin()
 	mReliableUdpThreadWakeUpEvent = NULL;
 	mReliableUdpWriteCompleteEvent = NULL;
 	mIsReliableUdpSending = false;
-
+	
+	mLock.LeaveWriteLock();
 	return true;
 }
 
 bool NetworkSession::End()
 {
 	//동기화
-
+	mLock.EnterWriteLock();
 	if (mSocket)
 		return false;
 
@@ -83,14 +85,15 @@ bool NetworkSession::End()
 	if (mReliableUdpWriteCompleteEvent)
 		CloseHandle(mReliableUdpWriteCompleteEvent);
 
-	//mReliableWriteQueue.End();
+	mReliableWriteQueue.End();
+	mLock.LeaveWriteLock();
 	return true;
 }
 
 bool NetworkSession::UdpBind(uint16 port)
 {
 	//동기화
-
+	mLock.EnterWriteLock();
 	if (mSocket)
 		return false;
 
@@ -150,6 +153,7 @@ bool NetworkSession::UdpBind(uint16 port)
 	mReliableUdpThreadHandle = CreateThread(NULL, 0, ::ReliableUdpThreadCallback, this, 0, &ReliableUdpThreadId);
 	WaitForSingleObject(mReliableUdpThreadStartupEvent, INFINITE);
 
+	mLock.LeaveWriteLock();
 	return true;
 }
 
@@ -164,7 +168,7 @@ void NetworkSession::ReliableUdpThreadCallback()
 	BYTE Data[MAX_BUFFER_LENGTH] = { 0 };
 	DWORD DataLength = 0;
 	void *Object = NULL;
-
+	
 	while (true)
 	{
 		SetEvent(mReliableUdpThreadStartupEvent);
@@ -172,9 +176,11 @@ void NetworkSession::ReliableUdpThreadCallback()
 		switch (EventID)
 		{
 		case WAIT_OBJECT_0:
+			cout << "데이터 수신" << endl;
 			return;
 		case WAIT_OBJECT_0 + 1:
 		NEXT_DATA:
+			cout << "데이터 수신" << endl;
 			if (mReliableWriteQueue.Pop(&Object, Data, DataLength, RemoteAddress, RemotePort)) //Write일경우 1개의 보낼 데이터 Pop
 			{
 		RETRY:
@@ -199,7 +205,7 @@ void NetworkSession::ReliableUdpThreadCallback()
 bool NetworkSession::InitializeReadFromForIOCP()
 {
 	//동기화
-
+	mLock.EnterWriteLock();
 	if (!mSocket)
 		return false;
 
@@ -219,12 +225,15 @@ bool NetworkSession::InitializeReadFromForIOCP()
 		End();
 		return false;
 	}
+
+	mLock.LeaveWriteLock();
 	return true;
 }
 
 bool NetworkSession::ReadFromForIOCP(char * remoteAddress, uint16 & remotePort, BYTE * data, DWORD &dataLength)
 {
 	//동기화
+	mLock.EnterWriteLock();
 	if (!mSocket)
 		return false;
 
@@ -234,7 +243,8 @@ bool NetworkSession::ReadFromForIOCP(char * remoteAddress, uint16 & remotePort, 
 	memcpy(data, mReadBuffer, dataLength);
 	strcpy(remoteAddress, inet_ntoa(mUdpRemoteInfo.sin_addr));
 	remotePort = ntohs(mUdpRemoteInfo.sin_port);
-
+	//cout << mReadBuffer << endl;
+	//BufferData
 	uint16 Ack = 0;
 	memcpy(&Ack, mReadBuffer, sizeof(uint16));
 	if (Ack == 9999)
@@ -246,14 +256,14 @@ bool NetworkSession::ReadFromForIOCP(char * remoteAddress, uint16 & remotePort, 
 		Ack = 9999;
 		WriteTo2(remoteAddress, remotePort, (BYTE*)&Ack, sizeof(uint16));
 	}
-
+	mLock.LeaveWriteLock();
 	return true;
 }
 
 bool NetworkSession::ReadFromForEventSelect(char * remoteAddress, uint16 & remotePort, BYTE * data, DWORD & dataLength)
 {
 	//동기화 개체
-
+	mLock.EnterWriteLock();
 	if (!mSocket)
 		return false;
 	if (!data)
@@ -294,13 +304,15 @@ bool NetworkSession::ReadFromForEventSelect(char * remoteAddress, uint16 & remot
 		Ack = 9999;
 		WriteTo2(remoteAddress, remotePort, (BYTE*)&Ack, sizeof(uint16));
 	}
+
+	mLock.LeaveWriteLock();
 	return true;
 }
 
 bool NetworkSession::Write(BYTE * data, DWORD dataLength)
 {
 	//동기화
-
+	mLock.EnterWriteLock();
 	if (!mSocket)
 		return false;
 
@@ -319,12 +331,15 @@ bool NetworkSession::Write(BYTE * data, DWORD dataLength)
 		End();
 		return false;
 	}
+
+	mLock.LeaveWriteLock();
 	return true;
 }
 
 bool NetworkSession::WriteTo(char * remoteAddress, uint16 remotePort, BYTE * data, DWORD dataLength)
 {
 	//동기화
+	mLock.EnterWriteLock();
 	if (!mSocket)
 		return false;
 
@@ -340,13 +355,14 @@ bool NetworkSession::WriteTo(char * remoteAddress, uint16 remotePort, BYTE * dat
 		SetEvent(mReliableUdpThreadWakeUpEvent);
 	}
 
+	mLock.LeaveWriteLock();
 	return true;
 }
 
 bool NetworkSession::WriteTo2(char * remoteAddress, uint16 remotePort, BYTE * data, DWORD dataLength)
 {
 	//동기화
-
+	mLock.EnterWriteLock();
 	if (!mSocket)
 		return false;
 	if (!remoteAddress || remotePort <= 0 || !data || dataLength <= 0)
@@ -374,13 +390,13 @@ bool NetworkSession::WriteTo2(char * remoteAddress, uint16 remotePort, BYTE * da
 		End();
 		return false;
 	}
+
+	mLock.LeaveWriteLock();	
 	return true;
 }
 
 SOCKET NetworkSession::GetSocket()
 {
-	//동기화
-
 	return mSocket;
 }
 

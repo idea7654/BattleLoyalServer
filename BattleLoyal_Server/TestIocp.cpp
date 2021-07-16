@@ -30,11 +30,11 @@ void TestIocp::OnIoRead(void * Object, DWORD dataLength)
 	uint16	RemotePort						= 0;
 
 	BYTE	WriteBuffer[MAX_BUFFER_LENGTH]	= { 0 };
-
+	
 	if (packetSession->ReadFromPacketForIOCP(RemoteAddress, RemotePort, dataLength))
 	{
-		//while (packetSession->GetPacket(RemoteAddress, RemotePort, Protocol, Packet, PacketLength))
-		//{
+		while (packetSession->GetPacket(RemoteAddress, RemotePort, Protocol, Packet, PacketLength))
+		{
 			//MultiByte
 		//	switch (Protocol)
 		//	{
@@ -43,8 +43,8 @@ void TestIocp::OnIoRead(void * Object, DWORD dataLength)
 		//	default:
 		//		break;
 		//	}
-		//}
-		cout << "무언가 패킷받음!!" << endl;
+			
+		}
 	}
 
 	if (!packetSession->InitializeReadFromForIOCP())
