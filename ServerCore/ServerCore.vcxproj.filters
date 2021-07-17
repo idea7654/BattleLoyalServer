@@ -57,6 +57,9 @@
     <ClInclude Include="CoreMacro.h">
       <Filter>Main</Filter>
     </ClInclude>
+    <ClInclude Include="MiniDump.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -87,6 +90,9 @@
       <Filter>Thread</Filter>
     </ClCompile>
     <ClCompile Include="Log.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="MiniDump.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
   </ItemGroup>

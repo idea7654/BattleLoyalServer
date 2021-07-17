@@ -77,6 +77,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)Libraries\$(Configuration)\</OutDir>
+    <IncludePath>C:\Program Files (x86)\Visual Leak Detector\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files (x86)\Visual Leak Detector\lib\Win64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -163,6 +165,7 @@
     <ClInclude Include="Log.h" />
     <ClInclude Include="MemoryManager.h" />
     <ClInclude Include="MemoryPool.h" />
+    <ClInclude Include="MiniDump.h" />
     <ClInclude Include="NetworkSession.h" />
     <ClInclude Include="PacketSession.h" />
     <ClInclude Include="pch.h" />
@@ -176,6 +179,7 @@
     <ClCompile Include="Iocp.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="MemoryPool.cpp" />
+    <ClCompile Include="MiniDump.cpp" />
     <ClCompile Include="NetworkSession.cpp" />
     <ClCompile Include="PacketSession.cpp" />
     <ClCompile Include="pch.cpp">

@@ -14,6 +14,7 @@
 #include <iostream>
 #include <tchar.h>
 #include <cstring>
+#include <vld.h>
 
 const int32 MAX_BUFFER_LENGTH = 4096;
 
@@ -41,3 +42,4 @@ using namespace std;
 
 #include "Log.h"
 #include "CoreGlobal.h"
+#include "MiniDump.h"

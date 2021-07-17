@@ -1,6 +1,19 @@
 ﻿#include "pch.h"
 #include "CorePch.h"
 #include "TestIocp.h"
+// 비정상 종료되는 함수
+void Func()
+{
+	char szBuf[1];
+
+	memset(szBuf, 0, sizeof(szBuf));
+
+	printf("start\n");
+	printf("%s\n", szBuf[1000000]);
+	printf("end\n");
+}
+
+
 int main()
 {
 	cout << "Start!!" << endl;
@@ -19,8 +32,11 @@ int main()
 	//네트워크
 	WSACleanup();
 	*/
+	MiniDump::MiniDump();
+	//Func();
 
-	Logger test(LOG_LEVEL_WARN);
-
-	test.fatal("fatal", 1);
+	string a = "asdf";
+	string b = "erqwer";
+	string c = to_string(2341);
+	cout << c << endl;
 }
