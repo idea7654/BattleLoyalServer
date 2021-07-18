@@ -176,11 +176,9 @@ void NetworkSession::ReliableUdpThreadCallback()
 		switch (EventID)
 		{
 		case WAIT_OBJECT_0:
-			cout << "데이터 수신" << endl;
 			return;
 		case WAIT_OBJECT_0 + 1:
 		NEXT_DATA:
-			cout << "데이터 수신" << endl;
 			if (mReliableWriteQueue.Pop(&Object, Data, DataLength, RemoteAddress, RemotePort)) //Write일경우 1개의 보낼 데이터 Pop
 			{
 		RETRY:
@@ -189,9 +187,12 @@ void NetworkSession::ReliableUdpThreadCallback()
 
 				DWORD Result = WaitForSingleObject(mReliableUdpWriteCompleteEvent, 10);
 				if (Result == WAIT_OBJECT_0)
+				{
+					cout << "여기 작돋ㅇ중" << endl;
 					goto NEXT_DATA;
-				else
-					goto RETRY;
+				}
+				//else
+					//goto RETRY;
 			}
 			else
 			{
@@ -371,7 +372,6 @@ bool NetworkSession::WriteTo2(char * remoteAddress, uint16 remotePort, BYTE * da
 	WSABUF wsaBuf;
 	DWORD WriteBytes = 0;
 	DWORD WriteFlag = 0;
-
 	SOCKADDR_IN RemoteAddressInfo;
 	int32 RemoteAddressInfoSize = sizeof(RemoteAddressInfo);
 
@@ -384,7 +384,7 @@ bool NetworkSession::WriteTo2(char * remoteAddress, uint16 remotePort, BYTE * da
 
 	int32 ReturnValue = WSASendTo(mSocket, &wsaBuf, 1, &WriteBytes, WriteFlag, (SOCKADDR*)&RemoteAddressInfo, RemoteAddressInfoSize
 		, &mWriteOverlapped.Overlapped, NULL);
-
+	cout << "전송완료0" << endl;
 	if (ReturnValue == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING && WSAGetLastError() != WSAEWOULDBLOCK)
 	{
 		End();

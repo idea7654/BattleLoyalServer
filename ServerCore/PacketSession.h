@@ -17,11 +17,11 @@ public:
 	bool	Begin();
 	bool	End();
 
-	bool	GetPacket(char* remoteAddress, uint16 remotePort, DWORD &protocol, BYTE* packet, DWORD &packetLength);
+	bool	GetPacket(char* remoteAddress, uint16 remotePort, /*DWORD &protocol,*/ BYTE* packet, DWORD &packetLength);
 
 	bool	ReadFromPacketForIOCP(char* remoteAddress, uint16 &remotePort,DWORD readLength);
 	bool	ReadFromPacketForEventSelect(char* remoteAddress, uint16 &remotePort);
-	bool	WriteToPacket(char* remoteAddress, uint16 remotePort, DWORD protocol, const BYTE* packet, DWORD packetLength);
+	bool	WriteToPacket(char* remoteAddress, uint16 remotePort, /*DWORD protocol,*/ const BYTE* packet, DWORD packetLength);
 
 	bool	WriteComplete();
 
@@ -29,7 +29,7 @@ public:
 private:
 	BYTE								mPacketBuffer[MAX_BUFFER_LENGTH * 3];
 	int32								mRemainLength;
-	DWORD								mCurrentPacketNumber;
+	int32								mCurrentPacketNumber;
 
 	DWORD								mLastReadPacketNumber;
 

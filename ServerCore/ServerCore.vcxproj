@@ -112,6 +112,7 @@
       <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>C:\Users\PCU\Desktop\GameServer\flatbuffers-2.0.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -171,6 +172,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="RWLock.h" />
     <ClInclude Include="Types.h" />
+    <ClInclude Include="Udp_WritePacket.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CircleQueue.cpp" />

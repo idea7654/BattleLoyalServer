@@ -38,7 +38,7 @@ bool PacketSession::End()
 	return NetworkSession::End();
 }
 
-bool PacketSession::GetPacket(char * remoteAddress, uint16 remotePort, DWORD & protocol, BYTE * packet, DWORD & packetLength)
+bool PacketSession::GetPacket(char * remoteAddress, uint16 remotePort, /*DWORD & protocol, */BYTE * packet, DWORD & packetLength)
 {
 	//동기화
 	if (!packet)
@@ -59,14 +59,14 @@ bool PacketSession::GetPacket(char * remoteAddress, uint16 remotePort, DWORD & p
 	if (PacketLength <= mRemainLength)
 	{
 		DWORD PacketNumber = 0;
-		DWORD Protocol = 0;
+		//DWORD Protocol = 0;
 		memcpy(&PacketNumber, mPacketBuffer + sizeof(DWORD), sizeof(DWORD));//패킷번호
-		memcpy(&Protocol, mPacketBuffer + sizeof(DWORD) + sizeof(DWORD), sizeof(DWORD)); //프로토콜 번호
+		//memcpy(&Protocol, mPacketBuffer + sizeof(DWORD) + sizeof(DWORD), sizeof(DWORD)); //프로토콜 번호
 
-		protocol = Protocol;
-		packetLength = PacketLength - (sizeof(DWORD) * 3);
+		//protocol = Protocol;
+		packetLength = PacketLength - (sizeof(DWORD) * 2);
 
-		memcpy(packet, mPacketBuffer + (sizeof(DWORD) * 3), packetLength);
+		memcpy(packet, mPacketBuffer + (sizeof(DWORD) * 2), packetLength);
 
 		if (mRemainLength - PacketLength > 0)
 			MoveMemory(mPacketBuffer, mPacketBuffer + PacketLength, mRemainLength - PacketLength);
@@ -131,14 +131,14 @@ bool PacketSession::ReadFromPacketForEventSelect(char * remoteAddress, uint16 & 
 	return true;
 }
 
-bool PacketSession::WriteToPacket(char * remoteAddress, uint16 remotePort, DWORD protocol, const BYTE * packet, DWORD packetLength)
+bool PacketSession::WriteToPacket(char * remoteAddress, uint16 remotePort, /*DWORD protocol,*/ const BYTE * packet, DWORD packetLength)
 {
 	//동기화
-	// LENGTH(4) | PACKET_NUMBER(4) | PROTOCOL(4) | DATA(4084)
+	// LENGTH(4) | PACKET_NUMBER(4) | DATA(4084)
 	if (!packet)
 		return false;
 
-	DWORD PacketLength = sizeof(DWORD) * 3 + packetLength;
+	DWORD PacketLength = sizeof(DWORD) * 2 + packetLength;
 	if (PacketLength >= MAX_BUFFER_LENGTH)
 		return false;
 
@@ -147,11 +147,12 @@ bool PacketSession::WriteToPacket(char * remoteAddress, uint16 remotePort, DWORD
 	BYTE TempBuffer[MAX_BUFFER_LENGTH] = { 0 };
 
 	memcpy(TempBuffer, &PacketLength, sizeof(DWORD)); // LENGTH
-	memcpy(TempBuffer + sizeof(DWORD), &mCurrentPacketNumber, sizeof(DWORD));
-	memcpy(TempBuffer + (sizeof(DWORD) * 2), &protocol, sizeof(DWORD));
-	memcpy(TempBuffer + (sizeof(DWORD) * 3), &packet, packetLength);
+	memcpy(TempBuffer + sizeof(DWORD), &mCurrentPacketNumber, sizeof(DWORD)); //packetNum
+	//memcpy(TempBuffer + (sizeof(DWORD) * 2), &protocol, sizeof(DWORD));
+	memcpy(TempBuffer + (sizeof(DWORD) * 2), &packet, packetLength);
 
 	BYTE* WriteData = writeQueue.Push(this, TempBuffer, PacketLength);
+
 	return NetworkSession::WriteTo(remoteAddress, remotePort, WriteData, PacketLength);
 }
 

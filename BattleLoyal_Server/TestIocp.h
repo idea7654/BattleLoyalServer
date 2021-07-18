@@ -24,6 +24,7 @@ protected:
 public:
 	bool Begin();
 	bool End();
+	bool Send();
 
 	void ResetThreadCallback(void);
 };

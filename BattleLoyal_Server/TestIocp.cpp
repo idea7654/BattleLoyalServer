@@ -33,7 +33,7 @@ void TestIocp::OnIoRead(void * Object, DWORD dataLength)
 	
 	if (packetSession->ReadFromPacketForIOCP(RemoteAddress, RemotePort, dataLength))
 	{
-		while (packetSession->GetPacket(RemoteAddress, RemotePort, Protocol, Packet, PacketLength))
+		while (packetSession->GetPacket(RemoteAddress, RemotePort, Packet, PacketLength))
 		{
 			//MultiByte
 		//	switch (Protocol)
@@ -101,6 +101,17 @@ bool TestIocp::End()
 
 	Iocp::End();
 	mUdpSession.End();
+
+	return true;
+}
+
+bool TestIocp::Send()
+{
+	int32 length = 0;
+	Position pos{ 1.0f, 2.0f, 3.0f };
+	Direction dir{ 1.0f, 2.0f, 3.0f };
+	auto packet = WRITE_PU_S2C_MOVE("Edea", pos, dir, length);
+	mUdpSession.WriteToPacket("127.0.0.1", 7777, packet, length);
 
 	return true;
 }

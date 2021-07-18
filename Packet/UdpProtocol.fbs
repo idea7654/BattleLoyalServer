@@ -1,0 +1,34 @@
+namespace MyProtocol;
+
+union MESSAGE_ID
+{
+  S2C_MOVE,
+  S2C_SHOOT
+}
+
+struct Vec3{
+  x:float;
+  y:float;
+  z:float;
+}
+
+table Message
+{
+  packet: MESSAGE_ID;
+}
+
+root_type Message;
+
+table S2C_MOVE
+{
+  nick_name:string;
+  pos: Vec3;
+  dir: Vec3;
+}
+
+table S2C_SHOOT
+{
+  nick_name:string;
+  pos: Vec3;
+  dir: Vec3;
+}

@@ -16,6 +16,9 @@
     <Filter Include="Thread">
       <UniqueIdentifier>{9ea3199e-5eb2-4e8c-b48d-4152fe1320fd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Packet">
+      <UniqueIdentifier>{51de7049-5a11-4afc-bbeb-e8ad81af5db0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -59,6 +62,9 @@
     </ClInclude>
     <ClInclude Include="MiniDump.h">
       <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Udp_WritePacket.h">
+      <Filter>Packet</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
