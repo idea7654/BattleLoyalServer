@@ -35,20 +35,24 @@ void TestIocp::OnIoRead(void * Object, DWORD dataLength)
 	{
 		while (packetSession->GetPacket(RemoteAddress, RemotePort, Packet, PacketLength))
 		{
-			//MultiByte
-		//	switch (Protocol)
-		//	{
-			//case PU_C2S_TUNNELING:
-				//각 프로토콜에 관한 처리
-		//	default:
-		//		break;
-		//	}
-			
+			auto message = GetMessage(Packet);
+			auto protocol = message->packet_type();
+			switch (protocol)
+			{
+			case MESSAGE_ID::MESSAGE_ID_C2S_MOVE:
+				auto RecvData = static_cast<const C2S_MOVE*>(message->packet());
+				READ_PU_C2S_MOVE(RecvData);
+			//default:
+				//break;
+			}
 		}
 	}
 
 	if (!packetSession->InitializeReadFromForIOCP())
+	{
+		End();
 		return;
+	}
 }
 
 void TestIocp::OnIoWrite(void * Object, DWORD dataLength)
