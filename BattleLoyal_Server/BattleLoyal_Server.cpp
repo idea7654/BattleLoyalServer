@@ -1,13 +1,10 @@
 ﻿#include "pch.h"
 #include "CorePch.h"
-#include "TestIocp.h"
-// 비정상 종료되는 함수
-
 int main()
 {
 	cout << "Start!!" << endl;
 	MiniDump::MiniDump();
-	
+	/*
 	WSADATA WSAData;
 	if (WSAStartup(MAKEWORD(2, 2), &WSAData) != 0)
 	{
@@ -22,4 +19,19 @@ int main()
 	getchar();
 	//네트워크
 	WSACleanup();
+	*/
+	SocketWorker *socketWorker = new SocketWorker();
+
+	if (!socketWorker->Begin())
+		return false;
+	if (!socketWorker->Bind(9999))
+		return false;
+	
+	thread t1(&SocketWorker::Init, socketWorker);
+
+	t1.join();
+	if (!socketWorker->End())
+		return false;
+	delete socketWorker;
+	getchar();
 }

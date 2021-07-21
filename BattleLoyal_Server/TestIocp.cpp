@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "TestIocp.h"
-
+/*
 DWORD WINAPI ResetThreadCallback(void* parameter)
 {
 	TestIocp *Owner = (TestIocp*)parameter;
@@ -132,3 +132,4 @@ void TestIocp::ResetThreadCallback(void)
 		mUdpSession.ResetUdp();
 	}
 }
+*/

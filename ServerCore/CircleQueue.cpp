@@ -13,7 +13,7 @@ BYTE * CircleQueue::Push(void * object, BYTE * data, DWORD dataLength, char * re
 	if (TempTail == mQueueHead)
 		return NULL;
 
-	mQueue[TempTail].Object = object;
+	//mQueue[TempTail].Object = object;
 	mQueue[TempTail].DataLength = dataLength;
 	mQueue[TempTail].RemotePort = remotePort;
 
@@ -40,7 +40,7 @@ BYTE * CircleQueue::Push(void * object, BYTE * data, DWORD dataLength)
 	if (TempTail == mQueueHead)
 		return NULL;
 
-	mQueue[TempTail].Object			= object;
+	//mQueue[TempTail].Object			= object;
 	mQueue[TempTail].DataLength		= dataLength;
 
 	memcpy(mQueue[TempTail].Data, data, dataLength);
@@ -48,7 +48,49 @@ BYTE * CircleQueue::Push(void * object, BYTE * data, DWORD dataLength)
 	return mQueue[TempTail].Data;
 }
 
+bool CircleQueue::Push(char * data, DWORD dataLength, char * remoteAddress, uint16 remotePort)
+{
+	mLock.EnterWriteLock();
+	DWORD TempTail = (mQueueTail + 1) % MAX_QUEUE_LENGTH;
+	if (TempTail == mQueueHead)
+		return false;
 
+	mQueue[TempTail].DataLength = dataLength;
+	mQueue[TempTail].RemotePort = remotePort;
+
+	memset(mQueue[TempTail].RemoteAddress, 0, sizeof(mQueue[TempTail].RemoteAddress));
+	strncpy_s(mQueue[TempTail].RemoteAddress, remoteAddress, sizeof(mQueue[TempTail].RemoteAddress));
+
+	memset(mQueue[TempTail].Data, 0, sizeof(mQueue[TempTail].Data));
+	memcpy(mQueue[TempTail].Data, data, dataLength);
+
+	mQueueTail = TempTail;
+	mLock.LeaveWriteLock();
+	return true;
+}
+
+
+bool CircleQueue::Pop(char *data, DWORD &dataLength, char *remoteAddress, uint16 &remotePort)
+{
+	mLock.EnterWriteLock();
+	if (!data)
+		return false;
+	if (mQueueHead == mQueueTail)
+		return false;
+
+	DWORD TempHead = (mQueueHead + 1) % MAX_QUEUE_LENGTH;
+
+	dataLength = mQueue[TempHead].DataLength;
+	remotePort = mQueue[TempHead].RemotePort;
+
+	strncpy(remoteAddress, mQueue[TempHead].RemoteAddress, sizeof(mQueue[TempHead].RemoteAddress));
+	memcpy(data, mQueue[TempHead].Data, mQueue[TempHead].DataLength);
+
+	mQueueHead = TempHead;
+	mLock.LeaveWriteLock();
+	return true;
+}
+/*
 bool CircleQueue::Pop(void ** object, BYTE * data, DWORD & dataLength, char* remoteAddress, uint16 & remotePort)
 {
 	//µø±‚»≠
@@ -62,7 +104,7 @@ bool CircleQueue::Pop(void ** object, BYTE * data, DWORD & dataLength, char* rem
 	DWORD TempHead = (mQueueHead + 1) % MAX_QUEUE_LENGTH;
 
 	dataLength = mQueue[TempHead].DataLength;
-	*object = mQueue[TempHead].Object;
+	//*object = mQueue[TempHead].Object;
 	remotePort = mQueue[TempHead].RemotePort;
 
 	strncpy(remoteAddress, mQueue[TempHead].RemoteAddress, sizeof(mQueue[TempHead].RemoteAddress));
@@ -84,3 +126,4 @@ bool CircleQueue::Pop()
 	mQueueHead = TempHead;
 	return true;
 }
+*/

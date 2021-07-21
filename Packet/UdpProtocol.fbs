@@ -1,9 +1,8 @@
-namespace MyProtocol;
-
 union MESSAGE_ID
 {
   S2C_MOVE,
-  S2C_SHOOT
+  S2C_SHOOT,
+  C2S_MOVE
 }
 
 struct Vec3{
@@ -27,6 +26,13 @@ table S2C_MOVE
 }
 
 table S2C_SHOOT
+{
+  nick_name:string;
+  pos: Vec3;
+  dir: Vec3;
+}
+
+table C2S_MOVE
 {
   nick_name:string;
   pos: Vec3;

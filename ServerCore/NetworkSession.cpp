@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "NetworkSession.h"
 #pragma warning(disable:4996)
+/*
 DWORD WINAPI ReliableUdpThreadCallback(void* parameter)
 {
 	NetworkSession *Owner = (NetworkSession*)parameter;
@@ -168,7 +169,7 @@ void NetworkSession::ReliableUdpThreadCallback()
 	BYTE Data[MAX_BUFFER_LENGTH] = { 0 };
 	DWORD DataLength = 0;
 	void *Object = NULL;
-	
+
 	while (true)
 	{
 		SetEvent(mReliableUdpThreadStartupEvent);
@@ -184,15 +185,13 @@ void NetworkSession::ReliableUdpThreadCallback()
 		RETRY:
 				if (!WriteTo2(RemoteAddress, RemotePort, Data, DataLength))
 					return;
-
 				DWORD Result = WaitForSingleObject(mReliableUdpWriteCompleteEvent, 10);
 				if (Result == WAIT_OBJECT_0)
 				{
-					cout << "여기 작돋ㅇ중" << endl;
 					goto NEXT_DATA;
 				}
-				//else
-					//goto RETRY;
+				else
+					goto RETRY;
 			}
 			else
 			{
@@ -226,7 +225,7 @@ bool NetworkSession::InitializeReadFromForIOCP()
 		End();
 		return false;
 	}
-
+	
 	mLock.LeaveWriteLock();
 	return true;
 }
@@ -244,95 +243,22 @@ bool NetworkSession::ReadFromForIOCP(char * remoteAddress, uint16 & remotePort, 
 	memcpy(data, mReadBuffer, dataLength);
 	strcpy(remoteAddress, inet_ntoa(mUdpRemoteInfo.sin_addr));
 	remotePort = ntohs(mUdpRemoteInfo.sin_port);
-	//cout << mReadBuffer << endl;
+
 	//BufferData
-	uint16 Ack = 0;
-	memcpy(&Ack, mReadBuffer, sizeof(uint16));
+	int Ack = 0;
+	memcpy(&Ack, mReadBuffer, sizeof(uint32));
+	
 	if (Ack == 9999)
 	{
 		SetEvent(mReliableUdpWriteCompleteEvent);
 		return false;
 	}
 	else {
-		Ack = 9999;
-		WriteTo2(remoteAddress, remotePort, (BYTE*)&Ack, sizeof(uint16));
+		//Ack = 9999;
+		//BYTE *byte = reinterpret_cast<BYTE*>(&Ack);
+		//WriteTo2(remoteAddress, remotePort, byte, sizeof(uint32));
+		//여기 고쳐야됨..왜인지 모르겠는데 WriteTo2가 호출이 안됨
 	}
-	mLock.LeaveWriteLock();
-	return true;
-}
-
-bool NetworkSession::ReadFromForEventSelect(char * remoteAddress, uint16 & remotePort, BYTE * data, DWORD & dataLength)
-{
-	//동기화 개체
-	mLock.EnterWriteLock();
-	if (!mSocket)
-		return false;
-	if (!data)
-		return false;
-	if (!remoteAddress || remotePort <= 0 || dataLength <= 0)
-		return false;
-
-	WSABUF wsaBuf;
-	DWORD ReadBytes = 0;
-	DWORD ReadFlag = 0;
-	int32 RemoteAddressInfoSize = sizeof(mUdpRemoteInfo);
-
-	wsaBuf.buf = (char*)mReadBuffer;
-	wsaBuf.len = MAX_BUFFER_LENGTH;
-
-	int32 ReturnValue = WSARecvFrom(mSocket, &wsaBuf, 1, &ReadBytes, &ReadFlag,
-		(SOCKADDR*)&mUdpRemoteInfo, &RemoteAddressInfoSize, &mReadOverlapped.Overlapped, NULL);
-
-	if (ReturnValue == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING && WSAGetLastError() != WSAEWOULDBLOCK)
-	{
-		End();
-		return false;
-	}
-
-	memcpy(data, mReadBuffer, dataLength);
-	strcpy(remoteAddress, inet_ntoa(mUdpRemoteInfo.sin_addr));
-	remotePort = ntohs(mUdpRemoteInfo.sin_port);
-
-	uint16 Ack = 0;
-	memcpy(&Ack, mReadBuffer, sizeof(uint16));
-
-	if (Ack == 9999)
-	{
-		SetEvent(mReliableUdpWriteCompleteEvent);
-		return false;
-	}
-	else {
-		Ack = 9999;
-		WriteTo2(remoteAddress, remotePort, (BYTE*)&Ack, sizeof(uint16));
-	}
-
-	mLock.LeaveWriteLock();
-	return true;
-}
-
-bool NetworkSession::Write(BYTE * data, DWORD dataLength)
-{
-	//동기화
-	mLock.EnterWriteLock();
-	if (!mSocket)
-		return false;
-
-	if (!data || dataLength <= 0)
-		return false;
-
-	WSABUF wsaBuf;
-	DWORD WriteBytes = 0;
-	DWORD WriteFlag = 0;
-	wsaBuf.buf = (char*)data;
-	wsaBuf.len = dataLength;
-
-	int32 ReturnValue = WSASend(mSocket, &wsaBuf, 1, &WriteBytes, WriteFlag, &mWriteOverlapped.Overlapped, NULL);
-	if (ReturnValue == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING && WSAGetLastError() != WSAEWOULDBLOCK)
-	{
-		End();
-		return false;
-	}
-
 	mLock.LeaveWriteLock();
 	return true;
 }
@@ -366,6 +292,7 @@ bool NetworkSession::WriteTo2(char * remoteAddress, uint16 remotePort, BYTE * da
 	mLock.EnterWriteLock();
 	if (!mSocket)
 		return false;
+
 	if (!remoteAddress || remotePort <= 0 || !data || dataLength <= 0)
 		return false;
 
@@ -377,14 +304,11 @@ bool NetworkSession::WriteTo2(char * remoteAddress, uint16 remotePort, BYTE * da
 
 	wsaBuf.buf = (char*)data;
 	wsaBuf.len = dataLength;
-
 	RemoteAddressInfo.sin_family = AF_INET;
 	RemoteAddressInfo.sin_addr.S_un.S_addr = inet_addr(remoteAddress);
 	RemoteAddressInfo.sin_port = htons(remotePort);
-
 	int32 ReturnValue = WSASendTo(mSocket, &wsaBuf, 1, &WriteBytes, WriteFlag, (SOCKADDR*)&RemoteAddressInfo, RemoteAddressInfoSize
 		, &mWriteOverlapped.Overlapped, NULL);
-	cout << "전송완료0" << endl;
 	if (ReturnValue == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING && WSAGetLastError() != WSAEWOULDBLOCK)
 	{
 		End();
@@ -401,3 +325,4 @@ SOCKET NetworkSession::GetSocket()
 }
 
 
+*/

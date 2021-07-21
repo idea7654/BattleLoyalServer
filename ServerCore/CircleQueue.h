@@ -2,7 +2,7 @@
 
 struct QUEUE_DATA
 {
-	void	*Object;
+	//void	*Object;
 	BYTE	Data[MAX_BUFFER_LENGTH];
 	DWORD	DataLength;
 	
@@ -22,10 +22,10 @@ public:
 	~CircleQueue(){}
 
 private:
-	QUEUE_DATA mQueue[MAX_QUEUE_LENGTH];
-	DWORD mQueueHead;
-	DWORD mQueueTail;
-
+	QUEUE_DATA	mQueue[MAX_QUEUE_LENGTH];
+	DWORD		mQueueHead;
+	DWORD		mQueueTail;
+	RWLock		mLock;
 public:
 	bool Begin()
 	{
@@ -46,7 +46,8 @@ public:
 	}
 	BYTE* Push(void *object, BYTE *data, DWORD dataLength, char* remoteAddress, uint16 remotePort);
 	BYTE* Push(void *object, BYTE* data, DWORD dataLength);
-
+	bool Push(char *data, DWORD dataLength, char* remoteAddress, uint16 remotePort);
+	/*
 	bool Pop(QUEUE_DATA& data)
 	{
 		if (mQueueHead == mQueueTail)
@@ -57,9 +58,10 @@ public:
 		mQueueHead = TempHead;
 		return true;
 	}
-
-	bool Pop(void **object, BYTE *data, DWORD &dataLength, char* remoteAddress, uint16 &remotePort);
-	bool Pop();
+	*/
+	bool Pop(char *data, DWORD &dataLength, char* remoteAddress, uint16 &remotePort);
+	//bool Pop(void **object, BYTE *data, DWORD &dataLength, char* remoteAddress, uint16 &remotePort);
+	//bool Pop();
 	bool IsEmpty()
 	{
 		if (mQueueHead == mQueueTail)

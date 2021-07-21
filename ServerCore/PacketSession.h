@@ -1,5 +1,5 @@
 #pragma once
-
+/*
 class PacketSession : public NetworkSession
 {
 public:
@@ -17,11 +17,11 @@ public:
 	bool	Begin();
 	bool	End();
 
-	bool	GetPacket(char* remoteAddress, uint16 remotePort, /*DWORD &protocol,*/ BYTE* packet, DWORD &packetLength);
+	bool	GetPacket(char* remoteAddress, uint16 remotePort,  BYTE* packet, DWORD &packetLength);
 
 	bool	ReadFromPacketForIOCP(char* remoteAddress, uint16 &remotePort,DWORD readLength);
 	bool	ReadFromPacketForEventSelect(char* remoteAddress, uint16 &remotePort);
-	bool	WriteToPacket(char* remoteAddress, uint16 remotePort, /*DWORD protocol,*/ const BYTE* packet, DWORD packetLength);
+	bool	WriteToPacket(char* remoteAddress, uint16 remotePort,  const BYTE* packet, DWORD packetLength);
 
 	bool	WriteComplete();
 
@@ -30,6 +30,7 @@ private:
 	BYTE								mPacketBuffer[MAX_BUFFER_LENGTH * 3];
 	int32								mRemainLength;
 	int32								mCurrentPacketNumber;
+	RWLock								mLock;
 
 	DWORD								mLastReadPacketNumber;
 
@@ -38,3 +39,4 @@ private:
 	vector<READ_PACKET_INFO>			mLastReadPacketInfoVectorForUdp;
 };
 
+*/

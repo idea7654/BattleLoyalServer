@@ -1,5 +1,5 @@
 #pragma once
-
+/*
 const int32 MAX_SESSION = 10;
 class TestIocp : public Iocp
 {
@@ -29,3 +29,4 @@ public:
 	void ResetThreadCallback(void);
 };
 
+*/

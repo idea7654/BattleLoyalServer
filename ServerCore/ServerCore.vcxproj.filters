@@ -66,6 +66,15 @@
     <ClInclude Include="Udp_WritePacket.h">
       <Filter>Packet</Filter>
     </ClInclude>
+    <ClInclude Include="Udp_ReadPacket.h">
+      <Filter>Packet</Filter>
+    </ClInclude>
+    <ClInclude Include="SocketUtils.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="SocketWorker.h">
+      <Filter>Network</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -101,5 +110,9 @@
     <ClCompile Include="MiniDump.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
+    <ClCompile Include="SocketUtils.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="SocketWorker.cpp" />
   </ItemGroup>
 </Project>

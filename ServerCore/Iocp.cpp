@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "Iocp.h"
-
+/*
 DWORD WINAPI WorkerThreadCallback(void* parameter)
 {
 	Iocp *Owner = (Iocp*)parameter;
@@ -17,6 +17,7 @@ void Iocp::WorkerThreadCallback() //데이터 받을 작업스레드
 	OVERLAPPED *Overlapped			= NULL;
 	_OVERLAPPED_EX *OverlappedEx	= NULL;
 	void *Object					= NULL;
+
 	while (true)
 	{
 		SetEvent(mStartHandle);
@@ -118,3 +119,4 @@ bool Iocp::RegisterSocketToIocp(SOCKET socket, ULONG_PTR completionKey)
 }
 
 
+*/
