@@ -10,6 +10,7 @@ public:
 	void	ReadEvent();
 	void	WriteEvent();
 	void	ThreadManage();
+	bool	CheckPacketNum(Session &session, uint32 PacketNumber);
 
 	vector<thread>	mThreadPool;
 };

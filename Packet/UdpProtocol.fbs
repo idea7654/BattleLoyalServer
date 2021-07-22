@@ -2,7 +2,8 @@ union MESSAGE_ID
 {
   S2C_MOVE,
   S2C_SHOOT,
-  C2S_MOVE
+  C2S_MOVE,
+  C2S_EXTEND_SESSION
 }
 
 struct Vec3{
@@ -37,4 +38,9 @@ table C2S_MOVE
   nick_name:string;
   pos: Vec3;
   dir: Vec3;
+}
+
+table C2S_EXTEND_SESSION
+{
+  nick_name:string;
 }

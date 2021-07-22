@@ -25,3 +25,13 @@ struct Direction
 	float y;
 	float z;
 };
+
+struct Session
+{
+	char*	remoteAddress;
+	char*	nickname;
+	uint16	port;
+	uint16	isOnline = 10;
+	uint32	RoomNum;
+	uint32	PacketNum = 1;
+};

@@ -22,16 +22,17 @@ int main()
 	*/
 	SocketWorker *socketWorker = new SocketWorker();
 
-	if (!socketWorker->Begin())
+	vector<Session> newSession;
+	if (!socketWorker->Begin(newSession))
 		return false;
 	if (!socketWorker->Bind(9999))
 		return false;
 	
 	thread t1(&SocketWorker::Init, socketWorker);
-
+	//컨텐츠만 넣으면 작동
 	t1.join();
 	if (!socketWorker->End())
 		return false;
 	delete socketWorker;
-	getchar();
+	//getchar();
 }

@@ -16,7 +16,7 @@ SocketUtils::~SocketUtils()
 	
 }
 
-bool SocketUtils::Begin()
+bool SocketUtils::Begin(vector<Session> &sessionVector)
 {
 	if (mSocket)
 		return false;
@@ -45,6 +45,8 @@ bool SocketUtils::Begin()
 
 	if (!mWriteQueue.Begin())
 		return false;
+
+	mUserSession = sessionVector;
 
 	return true;
 }
@@ -92,7 +94,8 @@ bool SocketUtils::RecvFrom()
 	if ((recvLen = recvfrom(mSocket, mReadBuffer, sizeof(mReadBuffer) - 1, 0, (SOCKADDR*)&mClientInfo, &clientSize)) == -1)
 		return false;
 	char* remoteAddress = inet_ntoa(mClientInfo.sin_addr);
-	int32 remotePort = mClientInfo.sin_port;
+	int32 remotePort = htons(mClientInfo.sin_port);
+
 	mLock.EnterWriteLock();
 	if (mReadQueue.Push(mReadBuffer, recvLen, remoteAddress, remotePort) == false)
 		return false;
@@ -109,20 +112,64 @@ bool SocketUtils::WriteTo(char * remoteAddress, uint16 & remotePort, BYTE* data,
 	char SendBuffer[MAX_BUFFER_LENGTH];
 	memset(SendBuffer, 0, sizeof(SendBuffer));
 
-	BYTE *PacketLength = reinterpret_cast<BYTE*>(dataLength + sizeof(int32) * 2);
-	memcpy(&SendBuffer, PacketLength, sizeof(int32));
+	DWORD PacketLength = sizeof(DWORD) * 2 + dataLength;
 
-	int32 PacketNumber = 1;
-	memcpy(&SendBuffer, reinterpret_cast<BYTE*>(PacketNumber), sizeof(int32));
-	memcpy(&SendBuffer, data, dataLength);
-
+	//int32 PacketNumber = 1;
+	memcpy(SendBuffer, &PacketLength, sizeof(int32));
+	memcpy(SendBuffer + sizeof(int32), &mPacketNumber, sizeof(int32));
+	memcpy(SendBuffer + sizeof(int32) * 2, data, dataLength);
 	//|  int32(PacketLength)  |  int32(PacketNumber)  |  data  |
 	mLock.EnterWriteLock();
-	if (mWriteQueue.Push(SendBuffer, dataLength + sizeof(int32) * 2, remoteAddress, remotePort) == false)
+	if (mWriteQueue.Push(SendBuffer, PacketLength, remoteAddress, remotePort) == false)
 		return false;
 
 	SetEvent(mWriteEvent);
+	mPacketNumber++;
 	mLock.LeaveWriteLock();
 
 	return true;
+}
+
+void SocketUtils::ReduceSessionTime() //Reduce SessionTime which in SessionVector, Use with Thread
+{
+	vector<Session> removeList;
+	mLock.EnterReadLock();
+	for (auto &i : mUserSession)
+	{
+		mLock.EnterWriteLock();
+		i.isOnline--;
+		mLock.LeaveWriteLock();
+		if (i.isOnline < 0)
+			removeList.push_back(i);
+	}
+	mLock.LeaveReadLock();
+	for (auto &i : removeList)
+	{
+		mLock.EnterWriteLock();
+		//mUserSession.erase(std::remove(mUserSession.begin(), mUserSession.end(), i), mUserSession.end());
+		for (std::vector<Session>::iterator it = mUserSession.begin(); it != mUserSession.end(); it++) 
+		{
+			if (it->remoteAddress == i.remoteAddress && it->port == i.port)//구조체 vector의 id값이 4인 원소를 삭제
+				mUserSession.erase(it);
+		}
+		mLock.LeaveWriteLock();
+	}
+}
+
+bool SocketUtils::ResetSessionTime(Session &session) //Use this or 
+//Read_PU_C2S_EXTEND_SESSION in Udp_ReadPacket.h
+{
+	mLock.EnterWriteLock();
+	session.isOnline = 10;
+	mLock.LeaveWriteLock();
+	return true;
+}
+
+Session SocketUtils::FindSession(char* remoteAddress, uint16 port)
+{
+	for (auto &i : mUserSession)
+	{
+		if (i.remoteAddress == remoteAddress && i.port == port)
+			return i;
+	}
 }

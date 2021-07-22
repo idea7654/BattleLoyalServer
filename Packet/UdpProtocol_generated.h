@@ -20,38 +20,44 @@ struct S2C_SHOOTBuilder;
 struct C2S_MOVE;
 struct C2S_MOVEBuilder;
 
+struct C2S_EXTEND_SESSION;
+struct C2S_EXTEND_SESSIONBuilder;
+
 enum MESSAGE_ID : uint8_t {
   MESSAGE_ID_NONE = 0,
   MESSAGE_ID_S2C_MOVE = 1,
   MESSAGE_ID_S2C_SHOOT = 2,
   MESSAGE_ID_C2S_MOVE = 3,
+  MESSAGE_ID_C2S_EXTEND_SESSION = 4,
   MESSAGE_ID_MIN = MESSAGE_ID_NONE,
-  MESSAGE_ID_MAX = MESSAGE_ID_C2S_MOVE
+  MESSAGE_ID_MAX = MESSAGE_ID_C2S_EXTEND_SESSION
 };
 
-inline const MESSAGE_ID (&EnumValuesMESSAGE_ID())[4] {
+inline const MESSAGE_ID (&EnumValuesMESSAGE_ID())[5] {
   static const MESSAGE_ID values[] = {
     MESSAGE_ID_NONE,
     MESSAGE_ID_S2C_MOVE,
     MESSAGE_ID_S2C_SHOOT,
-    MESSAGE_ID_C2S_MOVE
+    MESSAGE_ID_C2S_MOVE,
+    MESSAGE_ID_C2S_EXTEND_SESSION
   };
   return values;
 }
 
 inline const char * const *EnumNamesMESSAGE_ID() {
-  static const char * const names[5] = {
+  static const char * const names[6] = {
     "NONE",
     "S2C_MOVE",
     "S2C_SHOOT",
     "C2S_MOVE",
+    "C2S_EXTEND_SESSION",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameMESSAGE_ID(MESSAGE_ID e) {
-  if (flatbuffers::IsOutRange(e, MESSAGE_ID_NONE, MESSAGE_ID_C2S_MOVE)) return "";
+  if (flatbuffers::IsOutRange(e, MESSAGE_ID_NONE, MESSAGE_ID_C2S_EXTEND_SESSION)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesMESSAGE_ID()[index];
 }
@@ -70,6 +76,10 @@ template<> struct MESSAGE_IDTraits<S2C_SHOOT> {
 
 template<> struct MESSAGE_IDTraits<C2S_MOVE> {
   static const MESSAGE_ID enum_value = MESSAGE_ID_C2S_MOVE;
+};
+
+template<> struct MESSAGE_IDTraits<C2S_EXTEND_SESSION> {
+  static const MESSAGE_ID enum_value = MESSAGE_ID_C2S_EXTEND_SESSION;
 };
 
 bool VerifyMESSAGE_ID(flatbuffers::Verifier &verifier, const void *obj, MESSAGE_ID type);
@@ -126,6 +136,9 @@ struct Message FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const C2S_MOVE *packet_as_C2S_MOVE() const {
     return packet_type() == MESSAGE_ID_C2S_MOVE ? static_cast<const C2S_MOVE *>(packet()) : nullptr;
   }
+  const C2S_EXTEND_SESSION *packet_as_C2S_EXTEND_SESSION() const {
+    return packet_type() == MESSAGE_ID_C2S_EXTEND_SESSION ? static_cast<const C2S_EXTEND_SESSION *>(packet()) : nullptr;
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint8_t>(verifier, VT_PACKET_TYPE) &&
@@ -145,6 +158,10 @@ template<> inline const S2C_SHOOT *Message::packet_as<S2C_SHOOT>() const {
 
 template<> inline const C2S_MOVE *Message::packet_as<C2S_MOVE>() const {
   return packet_as_C2S_MOVE();
+}
+
+template<> inline const C2S_EXTEND_SESSION *Message::packet_as<C2S_EXTEND_SESSION>() const {
+  return packet_as_C2S_EXTEND_SESSION();
 }
 
 struct MessageBuilder {
@@ -403,6 +420,57 @@ inline flatbuffers::Offset<C2S_MOVE> CreateC2S_MOVEDirect(
       dir);
 }
 
+struct C2S_EXTEND_SESSION FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef C2S_EXTEND_SESSIONBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_NICK_NAME = 4
+  };
+  const flatbuffers::String *nick_name() const {
+    return GetPointer<const flatbuffers::String *>(VT_NICK_NAME);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_NICK_NAME) &&
+           verifier.VerifyString(nick_name()) &&
+           verifier.EndTable();
+  }
+};
+
+struct C2S_EXTEND_SESSIONBuilder {
+  typedef C2S_EXTEND_SESSION Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_nick_name(flatbuffers::Offset<flatbuffers::String> nick_name) {
+    fbb_.AddOffset(C2S_EXTEND_SESSION::VT_NICK_NAME, nick_name);
+  }
+  explicit C2S_EXTEND_SESSIONBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<C2S_EXTEND_SESSION> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<C2S_EXTEND_SESSION>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<C2S_EXTEND_SESSION> CreateC2S_EXTEND_SESSION(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::String> nick_name = 0) {
+  C2S_EXTEND_SESSIONBuilder builder_(_fbb);
+  builder_.add_nick_name(nick_name);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<C2S_EXTEND_SESSION> CreateC2S_EXTEND_SESSIONDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const char *nick_name = nullptr) {
+  auto nick_name__ = nick_name ? _fbb.CreateString(nick_name) : 0;
+  return CreateC2S_EXTEND_SESSION(
+      _fbb,
+      nick_name__);
+}
+
 inline bool VerifyMESSAGE_ID(flatbuffers::Verifier &verifier, const void *obj, MESSAGE_ID type) {
   switch (type) {
     case MESSAGE_ID_NONE: {
@@ -418,6 +486,10 @@ inline bool VerifyMESSAGE_ID(flatbuffers::Verifier &verifier, const void *obj, M
     }
     case MESSAGE_ID_C2S_MOVE: {
       auto ptr = reinterpret_cast<const C2S_MOVE *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case MESSAGE_ID_C2S_EXTEND_SESSION: {
+      auto ptr = reinterpret_cast<const C2S_EXTEND_SESSION *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return true;

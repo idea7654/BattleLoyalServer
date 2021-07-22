@@ -7,7 +7,20 @@
 inline auto READ_PU_C2S_MOVE(const C2S_MOVE *packet)
 {
 	string userName = packet->nick_name()->c_str();
-	cout << "유저가 이동했습니다!" << endl;
+	cout << "User Move!" << endl;
 }
 
-//C2S Protocol 처리 정의
+inline auto READ_PU_C2S_EXTEND_SESSION(const C2S_EXTEND_SESSION* packet, vector<Session> &sessions)
+{
+	string userName = packet->nick_name()->c_str();
+	for (auto &i : sessions)
+	{
+		if (i.nickname == userName)
+		{
+			i.isOnline = 10;
+			return;
+		}
+	}
+}
+
+//C2S Protocol Define

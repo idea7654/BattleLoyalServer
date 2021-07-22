@@ -42,17 +42,8 @@
     <ClInclude Include="Log.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="NetworkSession.h">
-      <Filter>Network</Filter>
-    </ClInclude>
     <ClInclude Include="CircleQueue.h">
       <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="PacketSession.h">
-      <Filter>Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Iocp.h">
-      <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="RWLock.h">
       <Filter>Thread</Filter>
@@ -89,17 +80,8 @@
     <ClCompile Include="CoreGlobal.cpp">
       <Filter>Main</Filter>
     </ClCompile>
-    <ClCompile Include="NetworkSession.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
     <ClCompile Include="CircleQueue.cpp">
       <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="PacketSession.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="Iocp.cpp">
-      <Filter>Network</Filter>
     </ClCompile>
     <ClCompile Include="RWLock.cpp">
       <Filter>Thread</Filter>
@@ -113,6 +95,8 @@
     <ClCompile Include="SocketUtils.cpp">
       <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="SocketWorker.cpp" />
+    <ClCompile Include="SocketWorker.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
