@@ -3,7 +3,13 @@ union MESSAGE_ID
   S2C_MOVE,
   S2C_SHOOT,
   C2S_MOVE,
-  C2S_EXTEND_SESSION
+  C2S_EXTEND_SESSION,
+  C2S_REQUEST_LOGIN,
+  C2S_REQUEST_REGISTER,
+  S2C_COMPLETE_LOGIN,
+  S2C_COMPLETE_REGISTER,
+  S2C_LOGIN_ERROR,
+  S2C_REGISTER_ERROR
 }
 
 struct Vec3{
@@ -43,4 +49,36 @@ table C2S_MOVE
 table C2S_EXTEND_SESSION
 {
   nick_name:string;
+}
+
+table C2S_REQUEST_LOGIN
+{
+  email:string;
+  password:string;
+}
+
+table C2S_REQUEST_REGISTER
+{
+  email:string;
+  password:string;
+}
+
+table S2C_COMPLETE_LOGIN
+{
+  issuccess:bool; //create session later
+}
+
+table S2C_COMPLETE_REGISTER
+{
+  issuccess:bool;
+}
+
+table S2C_LOGIN_ERROR
+{
+  message:string;
+}  
+
+table S2C_REGISTER_ERROR
+{
+  message:string;
 }

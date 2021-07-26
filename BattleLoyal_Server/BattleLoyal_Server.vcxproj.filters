@@ -4,6 +4,15 @@
     <Filter Include="Main">
       <UniqueIdentifier>{c5dc9b69-c194-4256-981d-3d9566e8087a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Database">
+      <UniqueIdentifier>{31cafefd-f1a2-45a7-a6fa-343e8012467b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network">
+      <UniqueIdentifier>{e11689e6-a717-48ad-9b06-838559f00806}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Packet">
+      <UniqueIdentifier>{caecf342-d7eb-47a0-9bb5-5268e2f8ebe9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BattleLoyal_Server.cpp">
@@ -12,10 +21,25 @@
     <ClCompile Include="pch.cpp">
       <Filter>Main</Filter>
     </ClCompile>
+    <ClCompile Include="SocketWorker.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
       <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="Database.h">
+      <Filter>Database</Filter>
+    </ClInclude>
+    <ClInclude Include="SocketWorker.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Udp_ReadPacket.h">
+      <Filter>Packet</Filter>
+    </ClInclude>
+    <ClInclude Include="Udp_WritePacket.h">
+      <Filter>Packet</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -169,10 +169,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="RWLock.h" />
     <ClInclude Include="SocketUtils.h" />
-    <ClInclude Include="SocketWorker.h" />
     <ClInclude Include="Types.h" />
-    <ClInclude Include="Udp_ReadPacket.h" />
-    <ClInclude Include="Udp_WritePacket.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CircleQueue.cpp" />
@@ -189,7 +186,6 @@
     </ClCompile>
     <ClCompile Include="RWLock.cpp" />
     <ClCompile Include="SocketUtils.cpp" />
-    <ClCompile Include="SocketWorker.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

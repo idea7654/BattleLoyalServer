@@ -15,19 +15,20 @@
 #include <tchar.h>
 #include <cstring>
 #include <vld.h>
+#include <WinSock2.h>
 
 const int32 MAX_BUFFER_LENGTH = 4096;
 
 using namespace std;
 
 #pragma comment(lib, "ws2_32.lib")
+
 #ifdef _SERVER_SIDE
 #define MAX_QUEUE_LENGTH	50
 #else
 #define MAX_QUEUE_LENGTH	500
 #endif
 
-#include <WinSock2.h>
 #include <MSWSock.h>
 #include <WS2tcpip.h>
 
@@ -36,16 +37,7 @@ using namespace std;
 #include "CircleQueue.h"
 #include "MemoryManager.h"
 
-//#include "NetworkSession.h"
-//#include "PacketSession.h"
-//#include "Iocp.h"
-
 #include "SocketUtils.h"
-#include "SocketWorker.h"
-
 #include "Log.h"
 #include "CoreGlobal.h"
 #include "MiniDump.h"
-
-#include "Udp_WritePacket.h"
-#include "Udp_ReadPacket.h"

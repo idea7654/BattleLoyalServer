@@ -1,5 +1,11 @@
 ﻿#include "pch.h"
 #include "CorePch.h"
+#include "Database.h"
+#include "flatbuffers/flatbuffers.h"
+//#include "../Packet/UdpProtocol_generated.h"
+//#include "Udp_ReadPacket.h"
+//#include "Udp_WritePacket.h"
+#include "SocketWorker.h"
 int main()
 {
 	cout << "Start!!" << endl;
@@ -30,6 +36,7 @@ int main()
 	
 	thread t1(&SocketWorker::Init, socketWorker);
 	//컨텐츠만 넣으면 작동
+	DBManager.SQL_INIT();
 	t1.join();
 	if (!socketWorker->End())
 		return false;

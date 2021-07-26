@@ -1,3 +1,4 @@
+/*
 #pragma once
 
 #include "flatbuffers/flatbuffers.h"
@@ -23,4 +24,20 @@ inline auto READ_PU_C2S_EXTEND_SESSION(const C2S_EXTEND_SESSION* packet, vector<
 	}
 }
 
+inline auto READ_PU_C2S_REQUEST_LOGIN(const C2S_REQUEST_LOGIN* packet)
+{
+	string email = packet->email()->c_str();
+	string password = packet->password()->c_str();
+	//여기에 디비조회처리하면됨...
+	
+}
+
+inline auto Read_PU_C2S_REQUEST_REGISTER(const C2S_REQUEST_REGISTER* packet)
+{
+	string email = packet->email()->c_str();
+	string password = packet->password()->c_str();
+	//여기에 디비 만들기 처리하면됨
+}
+
 //C2S Protocol Define
+*/

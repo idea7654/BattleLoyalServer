@@ -1,5 +1,5 @@
 #pragma once
-
+/*
 #include "flatbuffers/flatbuffers.h"
 #include "../Packet/UdpProtocol_generated.h"
 static flatbuffers::FlatBufferBuilder builder(1024);
@@ -26,3 +26,4 @@ inline auto WRITE_PU_S2C_MOVE(string nickname, Position &pos, Direction &dir, in
 //2. 대신에 Packet내용은 여기서 리턴된 data가 들어감
 //3. 따라서 최종 패킷은 이렇게 될 것임
 // | ushort(Length) | ushort(PacketNum) | flatBuffers Byte() |
+*/
