@@ -32,10 +32,6 @@ public:
 		}
 		//¶ô °É±â
 		Result = mysql_store_result(ConnPtr);
-		//while ((Row = mysql_fetch_row(Result)) != NULL)
-		//{
-		//	cout << Row[0] << endl << Row[1] << endl << Row[2] << endl;
-		//}
 		mysql_free_result(Result);
 		return Result;
 	}

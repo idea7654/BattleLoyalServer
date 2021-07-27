@@ -642,10 +642,14 @@ struct C2S_REQUEST_REGISTER FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table
   typedef C2S_REQUEST_REGISTERBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_EMAIL = 4,
-    VT_PASSWORD = 6
+    VT_NICKNAME = 6,
+    VT_PASSWORD = 8
   };
   const flatbuffers::String *email() const {
     return GetPointer<const flatbuffers::String *>(VT_EMAIL);
+  }
+  const flatbuffers::String *nickname() const {
+    return GetPointer<const flatbuffers::String *>(VT_NICKNAME);
   }
   const flatbuffers::String *password() const {
     return GetPointer<const flatbuffers::String *>(VT_PASSWORD);
@@ -654,6 +658,8 @@ struct C2S_REQUEST_REGISTER FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_EMAIL) &&
            verifier.VerifyString(email()) &&
+           VerifyOffset(verifier, VT_NICKNAME) &&
+           verifier.VerifyString(nickname()) &&
            VerifyOffset(verifier, VT_PASSWORD) &&
            verifier.VerifyString(password()) &&
            verifier.EndTable();
@@ -666,6 +672,9 @@ struct C2S_REQUEST_REGISTERBuilder {
   flatbuffers::uoffset_t start_;
   void add_email(flatbuffers::Offset<flatbuffers::String> email) {
     fbb_.AddOffset(C2S_REQUEST_REGISTER::VT_EMAIL, email);
+  }
+  void add_nickname(flatbuffers::Offset<flatbuffers::String> nickname) {
+    fbb_.AddOffset(C2S_REQUEST_REGISTER::VT_NICKNAME, nickname);
   }
   void add_password(flatbuffers::Offset<flatbuffers::String> password) {
     fbb_.AddOffset(C2S_REQUEST_REGISTER::VT_PASSWORD, password);
@@ -684,9 +693,11 @@ struct C2S_REQUEST_REGISTERBuilder {
 inline flatbuffers::Offset<C2S_REQUEST_REGISTER> CreateC2S_REQUEST_REGISTER(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::String> email = 0,
+    flatbuffers::Offset<flatbuffers::String> nickname = 0,
     flatbuffers::Offset<flatbuffers::String> password = 0) {
   C2S_REQUEST_REGISTERBuilder builder_(_fbb);
   builder_.add_password(password);
+  builder_.add_nickname(nickname);
   builder_.add_email(email);
   return builder_.Finish();
 }
@@ -694,12 +705,15 @@ inline flatbuffers::Offset<C2S_REQUEST_REGISTER> CreateC2S_REQUEST_REGISTER(
 inline flatbuffers::Offset<C2S_REQUEST_REGISTER> CreateC2S_REQUEST_REGISTERDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const char *email = nullptr,
+    const char *nickname = nullptr,
     const char *password = nullptr) {
   auto email__ = email ? _fbb.CreateString(email) : 0;
+  auto nickname__ = nickname ? _fbb.CreateString(nickname) : 0;
   auto password__ = password ? _fbb.CreateString(password) : 0;
   return CreateC2S_REQUEST_REGISTER(
       _fbb,
       email__,
+      nickname__,
       password__);
 }
 

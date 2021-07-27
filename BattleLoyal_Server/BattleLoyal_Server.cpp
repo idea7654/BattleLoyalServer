@@ -36,7 +36,7 @@ int main()
 	
 	thread t1(&SocketWorker::Init, socketWorker);
 	//컨텐츠만 넣으면 작동
-	DBManager.SQL_INIT();
+	
 	t1.join();
 	if (!socketWorker->End())
 		return false;

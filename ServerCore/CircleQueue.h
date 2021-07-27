@@ -34,6 +34,7 @@ public:
 	}
 
 	bool End() { return true; }
+	/*
 	bool Push(QUEUE_DATA data)
 	{
 		DWORD TempTail = (mQueueTail + 1) % MAX_QUEUE_LENGTH;
@@ -44,8 +45,7 @@ public:
 		mQueueTail = TempTail;
 		return true;
 	}
-	BYTE* Push(void *object, BYTE *data, DWORD dataLength, char* remoteAddress, uint16 remotePort);
-	BYTE* Push(void *object, BYTE* data, DWORD dataLength);
+	*/
 	bool Push(char *data, DWORD dataLength, char* remoteAddress, uint16 remotePort);
 	/*
 	bool Pop(QUEUE_DATA& data)

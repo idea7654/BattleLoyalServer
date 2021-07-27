@@ -19,27 +19,41 @@ inline auto READ_PU_C2S_EXTEND_SESSION(const C2S_EXTEND_SESSION* packet, vector<
 	}
 }
 
-inline auto READ_PU_C2S_REQUEST_LOGIN(const C2S_REQUEST_LOGIN* packet)
+inline auto READ_PU_C2S_REQUEST_LOGIN(const C2S_REQUEST_LOGIN* packet, char* remoteAddress, uint16 remotePort)
 {
 	string email = packet->email()->c_str();
 	string password = packet->password()->c_str();
 	//여기에 디비조회처리하면됨...
-	//char *Query = "SELECT * FROM users WHERE email="; //Query완성하고..
-	string Query = "SELECT * FROM users WHERE email=" + email + ";";
+	string Query = "SELECT * FROM users WHERE email='" + email + "';";
 	auto result = DBManager.SQL_QUERY((char*)Query.c_str());
 	MYSQL_ROW Row;
-	while ((Row = mysql_fetch_row(result)) != NULL)
+	if (mysql_fetch_row(result) == 0)
 	{
-		cout << Row[0] << endl << Row[1] << endl << Row[2] << endl;
+		return "Incorrect_Email";
 	}
-	//여기서 값 있는지 체크해서 있으면 해당 정보 읽어서 WritePacket리턴
-	return true;
+	//Check Session if login override
+	while ((Row = mysql_fetch_row(result)))
+	{
+		if (Row[2] == password)
+		{
+			return "Success";
+		}
+		//여기서 로그인 성공했을 때 유저 정보를 Write해야함..
+		//S2C_COMPLETE_LOGIN
+		else
+			cout << "Login Failed!!" << endl; //password incorrect
+	}
 }
 
-inline auto Read_PU_C2S_REQUEST_REGISTER(const C2S_REQUEST_REGISTER* packet)
+inline auto Read_PU_C2S_REQUEST_REGISTER(const C2S_REQUEST_REGISTER* packet, char* remoteAddress, uint16 remotePort)
 {
 	string email = packet->email()->c_str();
+	string nickname = packet->nickname()->c_str();
 	string password = packet->password()->c_str();
+
+	string Query = "INSERT INTO users VALUES('" + email + "', '" + nickname + "', '" + password + "')";
+	auto result = DBManager.SQL_QUERY((char*)Query.c_str());
+	cout << result << endl; //쿼리 반환값..성공여부겠지?
 	//여기에 디비 만들기 처리하면됨
 }
 

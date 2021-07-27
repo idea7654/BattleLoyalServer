@@ -18,7 +18,7 @@ void SocketWorker::Init()
 {
 	mRecvEvent = CreateEvent(0, false, false, NULL);
 	mWriteEvent = CreateEvent(0, false, false, NULL);
-
+	DBManager.SQL_INIT();
 	for (int32 i = 0; i < 8; i++) //8 WorkerThreads
 	{
 		mThreadPool.emplace_back(thread(&SocketWorker::ThreadManage, this));
@@ -65,7 +65,6 @@ void SocketWorker::ReadEvent()
 
 	if (!mReadQueue.Pop(mReadBuffer, dataLength, remoteAddress, remotePort))
 		return;
-
 	mLock.LeaveWriteLock();
 	int32 remainLength = dataLength;
 	int32 NextPacket = 0;
@@ -88,15 +87,14 @@ RETRY:
 	//WARN! 나중에 보낸 패킷이 먼저오면 전에꺼 보낸 패킷 무시해버림.
 	//따라서 해당 기능에 영향을 많이 받는다면 TCP를 사용하거나 로직을 바꿔야함
 	//This for only Check SamePacket...
-	if (!CheckPacketNum(target, PacketNumber) && (remainLength <= PacketLength))
-		return;
+	//if (!CheckPacketNum(target, PacketNumber) && (remainLength <= PacketLength))
+	//	return;
 
 	char packet[MAX_BUFFER_LENGTH];
 	::memcpy(&packet, mReadBuffer + sizeof(int32) * 2 + NextPacket, PacketLength);
 
 	auto message = GetMessage(packet);
 	auto protocol = message->packet_type();
-
 	switch (protocol)
 	{
 	case MESSAGE_ID::MESSAGE_ID_C2S_MOVE:
@@ -122,6 +120,35 @@ RETRY:
 		mLock.LeaveWriteLock();
 		break;
 	}
+	case MESSAGE_ID::MESSAGE_ID_C2S_REQUEST_LOGIN:
+	{
+		auto RecvData = static_cast<const C2S_REQUEST_LOGIN*>(message->packet());
+
+		mLock.EnterWriteLock();
+		auto returnData = READ_PU_C2S_REQUEST_LOGIN(RecvData, remoteAddress, remotePort);
+		if (returnData == "Incorrect_Email")
+		{
+			int32 errLength = 0;
+			auto packetData = WRITE_PU_S2C_LOGIN_ERROR("Incorrect_Email", errLength);
+			WriteTo(remoteAddress, remotePort, packetData, errLength);
+		}
+		else if (returnData == "Success")
+		{
+			int32 dataLength = 0;
+
+		}
+		mLock.LeaveWriteLock();
+		break;
+	}
+	case MESSAGE_ID::MESSAGE_ID_C2S_REQUEST_REGISTER:
+	{
+		auto RecvData = static_cast<const C2S_REQUEST_REGISTER*>(message->packet());
+
+		mLock.EnterWriteLock();
+		auto returnData = READ_PU_C2S_REQUEST_REGISTER(RecvData, remoteAddress, remotePort);
+		mLock.LeaveWriteLock();
+		break;
+	}
 	//Process of according to Protocol
 	}
 
@@ -141,7 +168,6 @@ void SocketWorker::WriteEvent()
 	DWORD dataLength = 0;
 	char remoteAddress[32] = { 0 };
 	uint16 remotePort = 0;
-
 	if (!mWriteQueue.Pop(mWriteBuffer, dataLength, remoteAddress, remotePort))
 		return;
 	mLock.LeaveWriteLock();
@@ -151,7 +177,6 @@ void SocketWorker::WriteEvent()
 	mClientInfo.sin_port = htons(remotePort);
 
 	int32 returnVal = sendto(mSocket, mWriteBuffer, dataLength, 0, (SOCKADDR*)&mClientInfo, sizeof(mClientInfo));
-
 	if (returnVal < 0)
 		return;
 }

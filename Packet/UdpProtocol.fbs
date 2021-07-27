@@ -60,6 +60,7 @@ table C2S_REQUEST_LOGIN
 table C2S_REQUEST_REGISTER
 {
   email:string;
+  nickname:string;
   password:string;
 }
 

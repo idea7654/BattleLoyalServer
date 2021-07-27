@@ -2,51 +2,6 @@
 #include "CircleQueue.h"
 #include <stdio.h>
 #pragma warning(disable:4996)
-BYTE * CircleQueue::Push(void * object, BYTE * data, DWORD dataLength, char * remoteAddress, uint16 remotePort)
-{
-	//동기화
-
-	if (!object || !data)
-		return NULL;
-	DWORD TempTail = (mQueueTail + 1) % MAX_QUEUE_LENGTH;
-
-	if (TempTail == mQueueHead)
-		return NULL;
-
-	//mQueue[TempTail].Object = object;
-	mQueue[TempTail].DataLength = dataLength;
-	mQueue[TempTail].RemotePort = remotePort;
-
-	memset(mQueue[TempTail].RemoteAddress, 0, sizeof(mQueue[TempTail].RemoteAddress));
-	strncpy_s(mQueue[TempTail].RemoteAddress, remoteAddress, sizeof(mQueue[TempTail].RemoteAddress));
-
-	memset(mQueue[TempTail].Data, 0, sizeof(mQueue[TempTail].Data));
-	memcpy(mQueue[TempTail].Data, data, dataLength);
-
-	mQueueTail = TempTail;
-
-	return mQueue[TempTail].Data;
-}
-
-BYTE * CircleQueue::Push(void * object, BYTE * data, DWORD dataLength)
-{
-	//동기화
-
-	if (!object || !data)
-		return NULL;
-
-	DWORD TempTail = (mQueueTail + 1) % MAX_QUEUE_LENGTH;
-
-	if (TempTail == mQueueHead)
-		return NULL;
-
-	//mQueue[TempTail].Object			= object;
-	mQueue[TempTail].DataLength		= dataLength;
-
-	memcpy(mQueue[TempTail].Data, data, dataLength);
-	mQueueTail = TempTail;
-	return mQueue[TempTail].Data;
-}
 
 bool CircleQueue::Push(char * data, DWORD dataLength, char * remoteAddress, uint16 remotePort)
 {
@@ -54,7 +9,7 @@ bool CircleQueue::Push(char * data, DWORD dataLength, char * remoteAddress, uint
 	DWORD TempTail = (mQueueTail + 1) % MAX_QUEUE_LENGTH;
 	if (TempTail == mQueueHead)
 		return false;
-
+	
 	mQueue[TempTail].DataLength = dataLength;
 	mQueue[TempTail].RemotePort = remotePort;
 

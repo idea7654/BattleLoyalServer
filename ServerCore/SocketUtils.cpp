@@ -108,24 +108,23 @@ bool SocketUtils::WriteTo(char * remoteAddress, uint16 & remotePort, BYTE* data,
 {
 	if (!mSocket)
 		return false;
-
+	
 	char SendBuffer[MAX_BUFFER_LENGTH];
 	memset(SendBuffer, 0, sizeof(SendBuffer));
-
 	DWORD PacketLength = sizeof(DWORD) * 2 + dataLength;
-
 	//int32 PacketNumber = 1;
+	
 	memcpy(SendBuffer, &PacketLength, sizeof(int32));
 	memcpy(SendBuffer + sizeof(int32), &mPacketNumber, sizeof(int32));
 	memcpy(SendBuffer + sizeof(int32) * 2, data, dataLength);
+	
 	//|  int32(PacketLength)  |  int32(PacketNumber)  |  data  |
-	mLock.EnterWriteLock();
+	//mLock.EnterWriteLock(); //DeadLock!!!!!!!!!!!!!!!!!!!
 	if (mWriteQueue.Push(SendBuffer, PacketLength, remoteAddress, remotePort) == false)
 		return false;
-
 	SetEvent(mWriteEvent);
 	mPacketNumber++;
-	mLock.LeaveWriteLock();
+	//mLock.LeaveWriteLock();
 
 	return true;
 }
