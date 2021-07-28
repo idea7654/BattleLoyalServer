@@ -126,6 +126,7 @@ RETRY:
 
 		mLock.EnterWriteLock();
 		auto returnData = READ_PU_C2S_REQUEST_LOGIN(RecvData, remoteAddress, remotePort);
+
 		if (returnData == "Incorrect_Email")
 		{
 			int32 errLength = 0;
@@ -146,6 +147,19 @@ RETRY:
 
 		mLock.EnterWriteLock();
 		auto returnData = READ_PU_C2S_REQUEST_REGISTER(RecvData, remoteAddress, remotePort);
+
+		if (returnData)
+		{
+			int32 Success = 0;
+			auto packetData = WRITE_PU_S2C_COMPLETE_REGISTER(Success);
+			WriteTo(remoteAddress, remotePort, packetData, Success);
+		}
+		else 
+		{
+			int32 errLength = 0;
+			auto packetData = WRITE_PU_S2C_REGISTER_ERROR(errLength, "Register_ERROR");
+			WriteTo(remoteAddress, remotePort, packetData, errLength);
+		}
 		mLock.LeaveWriteLock();
 		break;
 	}

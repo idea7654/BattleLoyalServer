@@ -21,18 +21,19 @@ public:
 		return true;
 	}
 
-	auto SQL_QUERY(char* query)
+	auto SQL_QUERY(char* query, bool &isSuccess)
 	{
 		//char *Query = "SELECT * FROM users";
 		Stat = mysql_query(ConnPtr, query);
 		if (Stat != 0)
 		{
-			cout << "MySql Query Error" << endl;
-			//return false;
+			isSuccess = false;
+			return Result;
 		}
 		//¶ô °É±â
 		Result = mysql_store_result(ConnPtr);
 		mysql_free_result(Result);
+		isSuccess = true;
 		return Result;
 	}
 

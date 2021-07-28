@@ -38,6 +38,34 @@ inline auto WRITE_PU_S2C_LOGIN_ERROR(string errorMessage, int32 &refLength)
 
 //inline auto WRITE_PU_S2C_LOGIN_SUCCESS
 
+inline auto WRITE_PU_S2C_COMPLETE_REGISTER(int32 &refLength)
+{
+	bool isSuccess = true;
+	auto makePacket = CreateS2C_COMPLETE_REGISTER(builder, isSuccess);
+	auto packet = CreateMessage(builder, MESSAGE_ID::MESSAGE_ID_S2C_COMPLETE_REGISTER, makePacket.Union());
+
+	builder.Finish(packet);
+	refLength = builder.GetSize();
+
+	auto data = builder.GetBufferPointer();
+	builder.Clear();
+	return data;
+}
+
+inline auto WRITE_PU_S2C_REGISTER_ERROR(int32 &refLength, string errMessage)
+{
+	auto message = builder.CreateString(errMessage);
+	auto makePacket = CreateS2C_REGISTER_ERROR(builder, message);
+	auto packet = CreateMessage(builder, MESSAGE_ID::MESSAGE_ID_S2C_REGISTER_ERROR, makePacket.Union());
+
+	builder.Finish(packet);
+	refLength = builder.GetSize();
+
+	auto data = builder.GetBufferPointer();
+	builder.Clear();
+	return data;
+}
+
 //1. Protocol 노필요.
 //2. 대신에 Packet내용은 여기서 리턴된 data가 들어감
 //3. 따라서 최종 패킷은 이렇게 될 것임
