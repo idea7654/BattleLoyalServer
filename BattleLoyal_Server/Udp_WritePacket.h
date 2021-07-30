@@ -36,7 +36,19 @@ inline auto WRITE_PU_S2C_LOGIN_ERROR(string errorMessage, int32 &refLength)
 	return data;
 }
 
-//inline auto WRITE_PU_S2C_LOGIN_SUCCESS
+inline auto WRITE_PU_S2C_COMPLETE_LOGIN(string nickname, int32 &refLength)
+{
+	auto mNickname = builder.CreateString(nickname);
+	auto makePacket = CreateS2C_COMPLETE_LOGIN(builder, mNickname);
+	auto packet = CreateMessage(builder, MESSAGE_ID::MESSAGE_ID_S2C_COMPLETE_LOGIN, makePacket.Union());
+
+	builder.Finish(packet);
+	refLength = builder.GetSize();
+
+	auto data = builder.GetBufferPointer();
+	builder.Clear();
+	return data;
+}
 
 inline auto WRITE_PU_S2C_COMPLETE_REGISTER(int32 &refLength)
 {

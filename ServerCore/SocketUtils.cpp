@@ -16,7 +16,7 @@ SocketUtils::~SocketUtils()
 	
 }
 
-bool SocketUtils::Begin(vector<Session> &sessionVector)
+bool SocketUtils::Begin()
 {
 	if (mSocket)
 		return false;
@@ -46,7 +46,7 @@ bool SocketUtils::Begin(vector<Session> &sessionVector)
 	if (!mWriteQueue.Begin())
 		return false;
 
-	mUserSession = sessionVector;
+	//mUserSession = sessionVector;
 
 	return true;
 }
@@ -108,16 +108,16 @@ bool SocketUtils::WriteTo(char * remoteAddress, uint16 & remotePort, BYTE* data,
 {
 	if (!mSocket)
 		return false;
-	
+
 	char SendBuffer[MAX_BUFFER_LENGTH];
 	memset(SendBuffer, 0, sizeof(SendBuffer));
 	DWORD PacketLength = sizeof(DWORD) * 2 + dataLength;
 	//int32 PacketNumber = 1;
-	
+
 	memcpy(SendBuffer, &PacketLength, sizeof(int32));
 	memcpy(SendBuffer + sizeof(int32), &mPacketNumber, sizeof(int32));
 	memcpy(SendBuffer + sizeof(int32) * 2, data, dataLength);
-	
+
 	//|  int32(PacketLength)  |  int32(PacketNumber)  |  data  |
 	//mLock.EnterWriteLock(); //DeadLock!!!!!!!!!!!!!!!!!!!
 	if (mWriteQueue.Push(SendBuffer, PacketLength, remoteAddress, remotePort) == false)
@@ -127,48 +127,4 @@ bool SocketUtils::WriteTo(char * remoteAddress, uint16 & remotePort, BYTE* data,
 	//mLock.LeaveWriteLock();
 
 	return true;
-}
-
-void SocketUtils::ReduceSessionTime() //Reduce SessionTime which in SessionVector, Use with Thread
-{
-	vector<Session> removeList;
-	mLock.EnterReadLock();
-	for (auto &i : mUserSession)
-	{
-		mLock.EnterWriteLock();
-		i.isOnline--;
-		mLock.LeaveWriteLock();
-		if (i.isOnline < 0)
-			removeList.push_back(i);
-	}
-	mLock.LeaveReadLock();
-	for (auto &i : removeList)
-	{
-		mLock.EnterWriteLock();
-		//mUserSession.erase(std::remove(mUserSession.begin(), mUserSession.end(), i), mUserSession.end());
-		for (std::vector<Session>::iterator it = mUserSession.begin(); it != mUserSession.end(); it++) 
-		{
-			if (it->remoteAddress == i.remoteAddress && it->port == i.port)//구조체 vector의 id값이 4인 원소를 삭제
-				mUserSession.erase(it);
-		}
-		mLock.LeaveWriteLock();
-	}
-}
-
-bool SocketUtils::ResetSessionTime(Session &session) //Use this or 
-//Read_PU_C2S_EXTEND_SESSION in Udp_ReadPacket.h
-{
-	mLock.EnterWriteLock();
-	session.isOnline = 10;
-	mLock.LeaveWriteLock();
-	return true;
-}
-
-Session SocketUtils::FindSession(char* remoteAddress, uint16 port)
-{
-	for (auto &i : mUserSession)
-	{
-		if (i.remoteAddress == remoteAddress && i.port == port)
-			return i;
-	}
 }

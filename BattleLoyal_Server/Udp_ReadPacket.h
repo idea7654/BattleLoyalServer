@@ -6,20 +6,20 @@ inline auto READ_PU_C2S_MOVE(const C2S_MOVE *packet)
 	cout << "User Move!" << endl;
 }
 
-inline auto READ_PU_C2S_EXTEND_SESSION(const C2S_EXTEND_SESSION* packet, vector<Session> &sessions)
+inline auto READ_PU_C2S_EXTEND_SESSION(const C2S_EXTEND_SESSION* packet, vector<shared_ptr<Session>> &sessions)
 {
 	string userName = packet->nick_name()->c_str();
 	for (auto &i : sessions)
 	{
-		if (i.nickname == userName)
+		if (i->nickname == userName)
 		{
-			i.isOnline = 10;
+			i->isOnline = 10;
 			return;
 		}
 	}
 }
 
-inline auto READ_PU_C2S_REQUEST_LOGIN(const C2S_REQUEST_LOGIN* packet, char* remoteAddress, uint16 remotePort)
+inline auto READ_PU_C2S_REQUEST_LOGIN(const C2S_REQUEST_LOGIN* packet)
 {
 	bool isSuccess = false;
 	string email = packet->email()->c_str();
@@ -29,23 +29,23 @@ inline auto READ_PU_C2S_REQUEST_LOGIN(const C2S_REQUEST_LOGIN* packet, char* rem
 	auto result = DBManager.SQL_QUERY((char*)Query.c_str(), isSuccess);
 
 	MYSQL_ROW Row;
-	if (mysql_fetch_row(result) == 0)
+
+	if (!isSuccess)
 	{
-		return "Incorrect_Email";
+		return (char*)"Incorrect_Email";
 	}
 	//Check Session if login override
 	while ((Row = mysql_fetch_row(result)))
 	{
 		if (Row[2] == password)
 		{
-			return "Success";
+			return Row[1];
 		}
-		//여기서 로그인 성공했을 때 유저 정보를 Write해야함..
 		//S2C_COMPLETE_LOGIN
 		else
 		{
-			cout << "Login Failed!!" << endl; //password incorrect
-			return "Incorrect_Email";
+			//cout << "Login Failed!!" << endl; //password incorrect
+			return (char*)"Incorrect_Email";
 		}
 	}
 }

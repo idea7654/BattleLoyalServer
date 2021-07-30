@@ -720,14 +720,15 @@ inline flatbuffers::Offset<C2S_REQUEST_REGISTER> CreateC2S_REQUEST_REGISTERDirec
 struct S2C_COMPLETE_LOGIN FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef S2C_COMPLETE_LOGINBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_ISSUCCESS = 4
+    VT_NICKNAME = 4
   };
-  bool issuccess() const {
-    return GetField<uint8_t>(VT_ISSUCCESS, 0) != 0;
+  const flatbuffers::String *nickname() const {
+    return GetPointer<const flatbuffers::String *>(VT_NICKNAME);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint8_t>(verifier, VT_ISSUCCESS) &&
+           VerifyOffset(verifier, VT_NICKNAME) &&
+           verifier.VerifyString(nickname()) &&
            verifier.EndTable();
   }
 };
@@ -736,8 +737,8 @@ struct S2C_COMPLETE_LOGINBuilder {
   typedef S2C_COMPLETE_LOGIN Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_issuccess(bool issuccess) {
-    fbb_.AddElement<uint8_t>(S2C_COMPLETE_LOGIN::VT_ISSUCCESS, static_cast<uint8_t>(issuccess), 0);
+  void add_nickname(flatbuffers::Offset<flatbuffers::String> nickname) {
+    fbb_.AddOffset(S2C_COMPLETE_LOGIN::VT_NICKNAME, nickname);
   }
   explicit S2C_COMPLETE_LOGINBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -752,10 +753,19 @@ struct S2C_COMPLETE_LOGINBuilder {
 
 inline flatbuffers::Offset<S2C_COMPLETE_LOGIN> CreateS2C_COMPLETE_LOGIN(
     flatbuffers::FlatBufferBuilder &_fbb,
-    bool issuccess = false) {
+    flatbuffers::Offset<flatbuffers::String> nickname = 0) {
   S2C_COMPLETE_LOGINBuilder builder_(_fbb);
-  builder_.add_issuccess(issuccess);
+  builder_.add_nickname(nickname);
   return builder_.Finish();
+}
+
+inline flatbuffers::Offset<S2C_COMPLETE_LOGIN> CreateS2C_COMPLETE_LOGINDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const char *nickname = nullptr) {
+  auto nickname__ = nickname ? _fbb.CreateString(nickname) : 0;
+  return CreateS2C_COMPLETE_LOGIN(
+      _fbb,
+      nickname__);
 }
 
 struct S2C_COMPLETE_REGISTER FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {

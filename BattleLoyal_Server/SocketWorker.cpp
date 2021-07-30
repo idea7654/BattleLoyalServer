@@ -72,7 +72,7 @@ RETRY:
 	int32 PacketLength = 0;
 	::memcpy(&PacketLength, mReadBuffer + NextPacket, sizeof(int32));
 
-	Session target = this->FindSession(remoteAddress, remotePort);
+	shared_ptr<Session> target = this->FindSession(remoteAddress, remotePort);
 	if (PacketLength == 8888)
 	{
 		ResetSessionTime(target);
@@ -125,19 +125,28 @@ RETRY:
 		auto RecvData = static_cast<const C2S_REQUEST_LOGIN*>(message->packet());
 
 		mLock.EnterWriteLock();
-		auto returnData = READ_PU_C2S_REQUEST_LOGIN(RecvData, remoteAddress, remotePort);
-
+		auto returnData = READ_PU_C2S_REQUEST_LOGIN(RecvData);
+		
 		if (returnData == "Incorrect_Email")
 		{
 			int32 errLength = 0;
 			auto packetData = WRITE_PU_S2C_LOGIN_ERROR("Incorrect_Email", errLength);
 			WriteTo(remoteAddress, remotePort, packetData, errLength);
 		}
-		else if (returnData == "Success")
+		else
 		{
 			int32 dataLength = 0;
-
+			auto packetData = WRITE_PU_S2C_COMPLETE_LOGIN(returnData, dataLength);
+			WriteTo(remoteAddress, remotePort, packetData, dataLength);
+			auto user = MakeShared<Session>();
+			user->isOnline = 10;
+			user->nickname = returnData;
+			user->remoteAddress = remoteAddress;
+			user->port = remotePort;
+			user->RoomNum = 0;
+			mUserSession.push_back(user);
 		}
+		
 		mLock.LeaveWriteLock();
 		break;
 	}
@@ -198,4 +207,48 @@ void SocketWorker::WriteEvent()
 bool SocketWorker::CheckPacketNum(Session &session, uint32 PacketNumber)
 {
 	return session.PacketNum >= PacketNumber ? false : true;
+}
+
+void SocketWorker::ReduceSessionTime() //Reduce SessionTime which in SessionVector, Use with Thread
+{
+	vector<shared_ptr<Session>> removeList;
+	mLock.EnterReadLock();
+	for (auto &i : mUserSession)
+	{
+		mLock.EnterWriteLock();
+		i->isOnline--;
+		mLock.LeaveWriteLock();
+		if (i->isOnline < 0)
+			removeList.push_back(i);
+	}
+	mLock.LeaveReadLock();
+	for (auto &i : removeList)
+	{
+		mLock.EnterWriteLock();
+		//mUserSession.erase(std::remove(mUserSession.begin(), mUserSession.end(), i), mUserSession.end());
+		for (std::vector<shared_ptr<Session>>::iterator it = mUserSession.begin(); it != mUserSession.end(); it++)
+		{
+			if ((*it)->remoteAddress == i->remoteAddress && (*it)->port == i->port)//구조체 vector의 id값이 4인 원소를 삭제
+				mUserSession.erase(it);
+		}
+		mLock.LeaveWriteLock();
+	}
+}
+
+bool SocketWorker::ResetSessionTime(shared_ptr<Session> &session) //Use this or 
+//Read_PU_C2S_EXTEND_SESSION in Udp_ReadPacket.h
+{
+	mLock.EnterWriteLock();
+	session->isOnline = 10;
+	mLock.LeaveWriteLock();
+	return true;
+}
+
+shared_ptr<Session> SocketWorker::FindSession(char* remoteAddress, uint16 port)
+{
+	for (auto &i : mUserSession)
+	{
+		if (i->remoteAddress == remoteAddress && i->port == port)
+			return i;
+	}
 }

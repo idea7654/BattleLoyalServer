@@ -28,8 +28,7 @@ int main()
 	*/
 	SocketWorker *socketWorker = new SocketWorker();
 
-	vector<Session> newSession;
-	if (!socketWorker->Begin(newSession))
+	if (!socketWorker->Begin())
 		return false;
 	if (!socketWorker->Bind(9999))
 		return false;
