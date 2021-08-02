@@ -63,4 +63,10 @@ inline auto READ_PU_C2S_REQUEST_REGISTER(const C2S_REQUEST_REGISTER* packet, cha
 	return isSuccess;
 }
 
+inline auto READ_PU_C2S_START_MATCHING(const C2S_START_MATCHING* packet)
+{
+	string nickname = packet->nickname()->c_str();
+	return nickname;
+}
+
 //C2S Protocol Define

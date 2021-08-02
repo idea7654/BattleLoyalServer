@@ -9,7 +9,8 @@ union MESSAGE_ID
   S2C_COMPLETE_LOGIN,
   S2C_COMPLETE_REGISTER,
   S2C_LOGIN_ERROR,
-  S2C_REGISTER_ERROR
+  S2C_REGISTER_ERROR,
+  C2S_START_MATCHING
 }
 
 struct Vec3{
@@ -83,4 +84,9 @@ table S2C_LOGIN_ERROR
 table S2C_REGISTER_ERROR
 {
   message:string;
+}
+
+table C2S_START_MATCHING
+{
+  nickname: string;
 }

@@ -172,6 +172,27 @@ RETRY:
 		mLock.LeaveWriteLock();
 		break;
 	}
+	case MESSAGE_ID::MESSAGE_ID_C2S_START_MATCHING:
+	{
+		auto RecvData = static_cast<const C2S_START_MATCHING*>(message->packet());
+
+		mLock.EnterWriteLock();
+		auto nickname = READ_PU_C2S_START_MATCHING(RecvData);
+		auto originSession = FindSession(remoteAddress, remotePort);
+		auto contentSession = MakeShared<ContentSession>();
+		contentSession->PacketNum = originSession->PacketNum;
+		contentSession->remoteAddress = originSession->remoteAddress;
+		contentSession->port = originSession->port;
+		contentSession->RoomNum = ROOM_NUM;
+		contentSession->nickname = originSession->nickname;
+		contentSession->isOnline = originSession->isOnline;
+		mContentSession.push_back(contentSession);
+		if (mContentSession.size() == ROOM_MAX_NUM)
+		{
+			GameStart();
+		}
+	}
+
 	//Process of according to Protocol
 	}
 
@@ -250,5 +271,27 @@ shared_ptr<Session> SocketWorker::FindSession(char* remoteAddress, uint16 port)
 	{
 		if (i->remoteAddress == remoteAddress && i->port == port)
 			return i;
+	}
+}
+
+auto SocketWorker::FindContentSession(int32 RoomNum)
+{
+	vector<shared_ptr<ContentSession>> returnVec;
+	for (auto &i : mContentSession)
+	{
+		if (i->RoomNum == RoomNum)
+			returnVec.push_back(i);
+	}
+	return returnVec;
+}
+
+void SocketWorker::GameStart()
+{
+	int32 OriginRoomNum = ROOM_NUM;
+	ROOM_NUM++;
+	auto RoomUsers = FindContentSession(OriginRoomNum);
+	for (auto &i : RoomUsers)
+	{
+		//WRITE_PU_S2C_GAME_START -> 상당히 길어짐..같은 Room에 있는 유저들 정보 ALL
 	}
 }
