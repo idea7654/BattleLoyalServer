@@ -44,6 +44,9 @@ struct S2C_REGISTER_ERRORBuilder;
 struct C2S_START_MATCHING;
 struct C2S_START_MATCHINGBuilder;
 
+struct S2C_GAME_START;
+struct S2C_GAME_STARTBuilder;
+
 enum MESSAGE_ID : uint8_t {
   MESSAGE_ID_NONE = 0,
   MESSAGE_ID_S2C_MOVE = 1,
@@ -57,11 +60,12 @@ enum MESSAGE_ID : uint8_t {
   MESSAGE_ID_S2C_LOGIN_ERROR = 9,
   MESSAGE_ID_S2C_REGISTER_ERROR = 10,
   MESSAGE_ID_C2S_START_MATCHING = 11,
+  MESSAGE_ID_S2C_GAME_START = 12,
   MESSAGE_ID_MIN = MESSAGE_ID_NONE,
-  MESSAGE_ID_MAX = MESSAGE_ID_C2S_START_MATCHING
+  MESSAGE_ID_MAX = MESSAGE_ID_S2C_GAME_START
 };
 
-inline const MESSAGE_ID (&EnumValuesMESSAGE_ID())[12] {
+inline const MESSAGE_ID (&EnumValuesMESSAGE_ID())[13] {
   static const MESSAGE_ID values[] = {
     MESSAGE_ID_NONE,
     MESSAGE_ID_S2C_MOVE,
@@ -74,13 +78,14 @@ inline const MESSAGE_ID (&EnumValuesMESSAGE_ID())[12] {
     MESSAGE_ID_S2C_COMPLETE_REGISTER,
     MESSAGE_ID_S2C_LOGIN_ERROR,
     MESSAGE_ID_S2C_REGISTER_ERROR,
-    MESSAGE_ID_C2S_START_MATCHING
+    MESSAGE_ID_C2S_START_MATCHING,
+    MESSAGE_ID_S2C_GAME_START
   };
   return values;
 }
 
 inline const char * const *EnumNamesMESSAGE_ID() {
-  static const char * const names[13] = {
+  static const char * const names[14] = {
     "NONE",
     "S2C_MOVE",
     "S2C_SHOOT",
@@ -93,13 +98,14 @@ inline const char * const *EnumNamesMESSAGE_ID() {
     "S2C_LOGIN_ERROR",
     "S2C_REGISTER_ERROR",
     "C2S_START_MATCHING",
+    "S2C_GAME_START",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameMESSAGE_ID(MESSAGE_ID e) {
-  if (flatbuffers::IsOutRange(e, MESSAGE_ID_NONE, MESSAGE_ID_C2S_START_MATCHING)) return "";
+  if (flatbuffers::IsOutRange(e, MESSAGE_ID_NONE, MESSAGE_ID_S2C_GAME_START)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesMESSAGE_ID()[index];
 }
@@ -150,6 +156,10 @@ template<> struct MESSAGE_IDTraits<S2C_REGISTER_ERROR> {
 
 template<> struct MESSAGE_IDTraits<C2S_START_MATCHING> {
   static const MESSAGE_ID enum_value = MESSAGE_ID_C2S_START_MATCHING;
+};
+
+template<> struct MESSAGE_IDTraits<S2C_GAME_START> {
+  static const MESSAGE_ID enum_value = MESSAGE_ID_S2C_GAME_START;
 };
 
 bool VerifyMESSAGE_ID(flatbuffers::Verifier &verifier, const void *obj, MESSAGE_ID type);
@@ -230,6 +240,9 @@ struct Message FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const C2S_START_MATCHING *packet_as_C2S_START_MATCHING() const {
     return packet_type() == MESSAGE_ID_C2S_START_MATCHING ? static_cast<const C2S_START_MATCHING *>(packet()) : nullptr;
   }
+  const S2C_GAME_START *packet_as_S2C_GAME_START() const {
+    return packet_type() == MESSAGE_ID_S2C_GAME_START ? static_cast<const S2C_GAME_START *>(packet()) : nullptr;
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint8_t>(verifier, VT_PACKET_TYPE) &&
@@ -281,6 +294,10 @@ template<> inline const S2C_REGISTER_ERROR *Message::packet_as<S2C_REGISTER_ERRO
 
 template<> inline const C2S_START_MATCHING *Message::packet_as<C2S_START_MATCHING>() const {
   return packet_as_C2S_START_MATCHING();
+}
+
+template<> inline const S2C_GAME_START *Message::packet_as<S2C_GAME_START>() const {
+  return packet_as_S2C_GAME_START();
 }
 
 struct MessageBuilder {
@@ -979,6 +996,58 @@ inline flatbuffers::Offset<C2S_START_MATCHING> CreateC2S_START_MATCHINGDirect(
       nickname__);
 }
 
+struct S2C_GAME_START FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef S2C_GAME_STARTBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_PLAYERS = 4
+  };
+  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *players() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_PLAYERS);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_PLAYERS) &&
+           verifier.VerifyVector(players()) &&
+           verifier.VerifyVectorOfStrings(players()) &&
+           verifier.EndTable();
+  }
+};
+
+struct S2C_GAME_STARTBuilder {
+  typedef S2C_GAME_START Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_players(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> players) {
+    fbb_.AddOffset(S2C_GAME_START::VT_PLAYERS, players);
+  }
+  explicit S2C_GAME_STARTBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<S2C_GAME_START> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<S2C_GAME_START>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<S2C_GAME_START> CreateS2C_GAME_START(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> players = 0) {
+  S2C_GAME_STARTBuilder builder_(_fbb);
+  builder_.add_players(players);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<S2C_GAME_START> CreateS2C_GAME_STARTDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const std::vector<flatbuffers::Offset<flatbuffers::String>> *players = nullptr) {
+  auto players__ = players ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*players) : 0;
+  return CreateS2C_GAME_START(
+      _fbb,
+      players__);
+}
+
 inline bool VerifyMESSAGE_ID(flatbuffers::Verifier &verifier, const void *obj, MESSAGE_ID type) {
   switch (type) {
     case MESSAGE_ID_NONE: {
@@ -1026,6 +1095,10 @@ inline bool VerifyMESSAGE_ID(flatbuffers::Verifier &verifier, const void *obj, M
     }
     case MESSAGE_ID_C2S_START_MATCHING: {
       auto ptr = reinterpret_cast<const C2S_START_MATCHING *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case MESSAGE_ID_S2C_GAME_START: {
+      auto ptr = reinterpret_cast<const S2C_GAME_START *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return true;

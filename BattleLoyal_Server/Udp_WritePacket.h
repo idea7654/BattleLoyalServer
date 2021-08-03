@@ -78,7 +78,16 @@ inline auto WRITE_PU_S2C_REGISTER_ERROR(int32 &refLength, string errMessage)
 	return data;
 }
 
-//1. Protocol 노필요.
-//2. 대신에 Packet내용은 여기서 리턴된 data가 들어감
-//3. 따라서 최종 패킷은 이렇게 될 것임
-// | ushort(Length) | ushort(PacketNum) | flatBuffers Byte() |
+inline auto WRITE_PU_S2C_GAME_START(int32 &refLength, vector<string> Users)
+{
+	auto UserNicks = builder.CreateVectorOfStrings(Users);
+	auto makePacket = CreateS2C_GAME_START(builder, UserNicks);
+	auto packet = CreateMessage(builder, MESSAGE_ID::MESSAGE_ID_S2C_GAME_START, makePacket.Union());
+
+	builder.Finish(packet);
+	refLength = builder.GetSize();
+
+	auto data = builder.GetBufferPointer();
+	builder.Clear();
+	return data;
+}

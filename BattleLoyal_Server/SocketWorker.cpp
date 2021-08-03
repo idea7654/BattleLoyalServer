@@ -290,8 +290,15 @@ void SocketWorker::GameStart()
 	int32 OriginRoomNum = ROOM_NUM;
 	ROOM_NUM++;
 	auto RoomUsers = FindContentSession(OriginRoomNum);
+	vector<string> UserNicks;
 	for (auto &i : RoomUsers)
 	{
-		//WRITE_PU_S2C_GAME_START -> 상당히 길어짐..같은 Room에 있는 유저들 정보 ALL
+		UserNicks.push_back(i->nickname);
+	}
+	for (auto &i : RoomUsers)
+	{
+		int32 packetLength = 0;
+		auto packet = WRITE_PU_S2C_GAME_START(packetLength, UserNicks);
+		WriteTo(i->remoteAddress, i->port, packet, packetLength);
 	}
 }
