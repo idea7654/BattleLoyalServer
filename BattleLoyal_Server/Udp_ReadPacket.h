@@ -24,7 +24,7 @@ inline auto READ_PU_C2S_REQUEST_LOGIN(const C2S_REQUEST_LOGIN* packet)
 	bool isSuccess = false;
 	string email = packet->email()->c_str();
 	string password = packet->password()->c_str();
-	//여기에 디비조회처리하면됨...
+	
 	string Query = "SELECT * FROM users WHERE email='" + email + "';";
 	auto result = DBManager.SQL_QUERY((char*)Query.c_str(), isSuccess);
 
@@ -34,7 +34,7 @@ inline auto READ_PU_C2S_REQUEST_LOGIN(const C2S_REQUEST_LOGIN* packet)
 	{
 		return (char*)"Incorrect_Email";
 	}
-	//Check Session if login override
+	
 	while ((Row = mysql_fetch_row(result)))
 	{
 		if (Row[2] == password)

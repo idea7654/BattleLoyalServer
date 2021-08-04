@@ -30,6 +30,7 @@ public:
 private:
 	static void allocBlock()
 	{
+		cout << "실행됨!!" << endl;
 		mFreePointer = new BYTE[sizeof(T) * ALLOC_BLOCK_SIZE];
 		BYTE** Current = reinterpret_cast<BYTE**>(mFreePointer); //할당된 첫 블럭 메모리 포인터
 		BYTE* Next = mFreePointer; //할당된 첫 메모리

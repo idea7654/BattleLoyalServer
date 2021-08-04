@@ -72,11 +72,11 @@ RETRY:
 	int32 PacketLength = 0;
 	::memcpy(&PacketLength, mReadBuffer + NextPacket, sizeof(int32));
 
-	shared_ptr<Session> target = this->FindSession(remoteAddress, remotePort);
-	if (PacketLength == 8888)
-	{
-		ResetSessionTime(target);
-	} //USE this or C2S_EXTEND_SESSION Packet
+	//shared_ptr<Session> target = this->FindSession(remoteAddress, remotePort);
+	//if (PacketLength == 8888)
+	//{
+	//	ResetSessionTime(target);
+	//} //USE this or C2S_EXTEND_SESSION Packet
 
 	//Ack 9999 -> Reliable
 
@@ -135,6 +135,12 @@ RETRY:
 		}
 		else
 		{
+			//중복체크
+			auto overLogin = FindSession(returnData);
+			if (overLogin)
+			{
+				//LOGIN_ERROR->중복로그인 처리
+			}
 			int32 dataLength = 0;
 			auto packetData = WRITE_PU_S2C_COMPLETE_LOGIN(returnData, dataLength);
 			WriteTo(remoteAddress, remotePort, packetData, dataLength);
@@ -178,7 +184,7 @@ RETRY:
 
 		mLock.EnterWriteLock();
 		auto nickname = READ_PU_C2S_START_MATCHING(RecvData);
-		auto originSession = FindSession(remoteAddress, remotePort);
+		auto originSession = FindSession(nickname);
 		auto contentSession = MakeShared<ContentSession>();
 		contentSession->PacketNum = originSession->PacketNum;
 		contentSession->remoteAddress = originSession->remoteAddress;
@@ -191,6 +197,7 @@ RETRY:
 		{
 			GameStart();
 		}
+		mLock.LeaveWriteLock();
 	}
 
 	//Process of according to Protocol
@@ -265,11 +272,11 @@ bool SocketWorker::ResetSessionTime(shared_ptr<Session> &session) //Use this or
 	return true;
 }
 
-shared_ptr<Session> SocketWorker::FindSession(char* remoteAddress, uint16 port)
+shared_ptr<Session> SocketWorker::FindSession(string nickname)
 {
 	for (auto &i : mUserSession)
 	{
-		if (i->remoteAddress == remoteAddress && i->port == port)
+		if (i->nickname == nickname)
 			return i;
 	}
 }

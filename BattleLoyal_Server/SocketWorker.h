@@ -28,7 +28,7 @@ public:
 
 	void					ReduceSessionTime();
 	bool					ResetSessionTime(shared_ptr<Session> &session);
-	shared_ptr<Session>		FindSession(char* remoteAddress, uint16 port);
+	shared_ptr<Session>		FindSession(string nickname);
 	auto					FindContentSession(int32 RoomNum);
 	void					GameStart();
 
