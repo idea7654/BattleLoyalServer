@@ -16,6 +16,7 @@
 #include <cstring>
 #include <vld.h>
 #include <WinSock2.h>
+#include <string.h>
 
 const int32 MAX_BUFFER_LENGTH = 4096;
 

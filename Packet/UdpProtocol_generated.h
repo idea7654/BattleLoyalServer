@@ -44,6 +44,9 @@ struct S2C_REGISTER_ERRORBuilder;
 struct C2S_START_MATCHING;
 struct C2S_START_MATCHINGBuilder;
 
+struct InitUserInfo;
+struct InitUserInfoBuilder;
+
 struct S2C_GAME_START;
 struct S2C_GAME_STARTBuilder;
 
@@ -996,19 +999,82 @@ inline flatbuffers::Offset<C2S_START_MATCHING> CreateC2S_START_MATCHINGDirect(
       nickname__);
 }
 
-struct S2C_GAME_START FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  typedef S2C_GAME_STARTBuilder Builder;
+struct InitUserInfo FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef InitUserInfoBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_PLAYERS = 4
+    VT_NICKNAME = 4,
+    VT_POS = 6
   };
-  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *players() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_PLAYERS);
+  const flatbuffers::String *nickname() const {
+    return GetPointer<const flatbuffers::String *>(VT_NICKNAME);
+  }
+  const Vec3 *pos() const {
+    return GetStruct<const Vec3 *>(VT_POS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_PLAYERS) &&
-           verifier.VerifyVector(players()) &&
-           verifier.VerifyVectorOfStrings(players()) &&
+           VerifyOffset(verifier, VT_NICKNAME) &&
+           verifier.VerifyString(nickname()) &&
+           VerifyField<Vec3>(verifier, VT_POS) &&
+           verifier.EndTable();
+  }
+};
+
+struct InitUserInfoBuilder {
+  typedef InitUserInfo Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_nickname(flatbuffers::Offset<flatbuffers::String> nickname) {
+    fbb_.AddOffset(InitUserInfo::VT_NICKNAME, nickname);
+  }
+  void add_pos(const Vec3 *pos) {
+    fbb_.AddStruct(InitUserInfo::VT_POS, pos);
+  }
+  explicit InitUserInfoBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<InitUserInfo> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<InitUserInfo>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<InitUserInfo> CreateInitUserInfo(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::String> nickname = 0,
+    const Vec3 *pos = 0) {
+  InitUserInfoBuilder builder_(_fbb);
+  builder_.add_pos(pos);
+  builder_.add_nickname(nickname);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<InitUserInfo> CreateInitUserInfoDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const char *nickname = nullptr,
+    const Vec3 *pos = 0) {
+  auto nickname__ = nickname ? _fbb.CreateString(nickname) : 0;
+  return CreateInitUserInfo(
+      _fbb,
+      nickname__,
+      pos);
+}
+
+struct S2C_GAME_START FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef S2C_GAME_STARTBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_USERDATA = 4
+  };
+  const flatbuffers::Vector<flatbuffers::Offset<InitUserInfo>> *userdata() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<InitUserInfo>> *>(VT_USERDATA);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_USERDATA) &&
+           verifier.VerifyVector(userdata()) &&
+           verifier.VerifyVectorOfTables(userdata()) &&
            verifier.EndTable();
   }
 };
@@ -1017,8 +1083,8 @@ struct S2C_GAME_STARTBuilder {
   typedef S2C_GAME_START Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_players(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> players) {
-    fbb_.AddOffset(S2C_GAME_START::VT_PLAYERS, players);
+  void add_userdata(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<InitUserInfo>>> userdata) {
+    fbb_.AddOffset(S2C_GAME_START::VT_USERDATA, userdata);
   }
   explicit S2C_GAME_STARTBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -1033,19 +1099,19 @@ struct S2C_GAME_STARTBuilder {
 
 inline flatbuffers::Offset<S2C_GAME_START> CreateS2C_GAME_START(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> players = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<InitUserInfo>>> userdata = 0) {
   S2C_GAME_STARTBuilder builder_(_fbb);
-  builder_.add_players(players);
+  builder_.add_userdata(userdata);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<S2C_GAME_START> CreateS2C_GAME_STARTDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    const std::vector<flatbuffers::Offset<flatbuffers::String>> *players = nullptr) {
-  auto players__ = players ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*players) : 0;
+    const std::vector<flatbuffers::Offset<InitUserInfo>> *userdata = nullptr) {
+  auto userdata__ = userdata ? _fbb.CreateVector<flatbuffers::Offset<InitUserInfo>>(*userdata) : 0;
   return CreateS2C_GAME_START(
       _fbb,
-      players__);
+      userdata__);
 }
 
 inline bool VerifyMESSAGE_ID(flatbuffers::Verifier &verifier, const void *obj, MESSAGE_ID type) {

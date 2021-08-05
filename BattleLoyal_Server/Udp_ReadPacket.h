@@ -34,6 +34,11 @@ inline auto READ_PU_C2S_REQUEST_LOGIN(const C2S_REQUEST_LOGIN* packet)
 	{
 		return (char*)"Incorrect_Email";
 	}
+
+	if (result == 0)
+	{
+		return (char*)"Incorrect_Email";
+	}
 	
 	while ((Row = mysql_fetch_row(result)))
 	{

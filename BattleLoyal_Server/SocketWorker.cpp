@@ -3,6 +3,7 @@
 #include "../Packet/UdpProtocol_generated.h"
 #include "Udp_ReadPacket.h"
 #include "Udp_WritePacket.h"
+
 #pragma warning(disable:4996)
 
 SocketWorker::SocketWorker()
@@ -19,6 +20,10 @@ void SocketWorker::Init()
 	mRecvEvent = CreateEvent(0, false, false, NULL);
 	mWriteEvent = CreateEvent(0, false, false, NULL);
 	DBManager.SQL_INIT();
+	//Define Init Position
+	mInitPos.push_back(Position{ 6, -1.45, 2 });
+	mInitPos.push_back(Position{ -6, -1.45, -2 });
+
 	for (int32 i = 0; i < 8; i++) //8 WorkerThreads
 	{
 		mThreadPool.emplace_back(thread(&SocketWorker::ThreadManage, this));
@@ -126,7 +131,6 @@ RETRY:
 
 		mLock.EnterWriteLock();
 		auto returnData = READ_PU_C2S_REQUEST_LOGIN(RecvData);
-		
 		if (returnData == "Incorrect_Email")
 		{
 			int32 errLength = 0;
@@ -279,6 +283,7 @@ shared_ptr<Session> SocketWorker::FindSession(string nickname)
 		if (i->nickname == nickname)
 			return i;
 	}
+	return nullptr;
 }
 
 auto SocketWorker::FindContentSession(int32 RoomNum)
@@ -297,15 +302,20 @@ void SocketWorker::GameStart()
 	int32 OriginRoomNum = ROOM_NUM;
 	ROOM_NUM++;
 	auto RoomUsers = FindContentSession(OriginRoomNum);
-	vector<string> UserNicks;
-	for (auto &i : RoomUsers)
-	{
-		UserNicks.push_back(i->nickname);
-	}
+	SetUserPosition(RoomUsers);
 	for (auto &i : RoomUsers)
 	{
 		int32 packetLength = 0;
-		auto packet = WRITE_PU_S2C_GAME_START(packetLength, UserNicks);
+		auto packet = WRITE_PU_S2C_GAME_START(packetLength, RoomUsers, i->pos);
 		WriteTo(i->remoteAddress, i->port, packet, packetLength);
+	}
+}
+
+void SocketWorker::SetUserPosition(vector<shared_ptr<ContentSession>> &sessions)
+{
+	uint16 j = 0;
+	for (auto &i : sessions)
+	{
+		i->pos = mInitPos[j];
 	}
 }

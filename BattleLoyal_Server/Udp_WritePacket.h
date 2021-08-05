@@ -1,7 +1,5 @@
 #pragma once
 
-//#include "flatbuffers/flatbuffers.h"
-//#include "../Packet/UdpProtocol_generated.h"
 static flatbuffers::FlatBufferBuilder builder(1024);
 
 inline auto WRITE_PU_S2C_MOVE(string nickname, Position &pos, Direction &dir, int32 &refLength)
@@ -78,10 +76,18 @@ inline auto WRITE_PU_S2C_REGISTER_ERROR(int32 &refLength, string errMessage)
 	return data;
 }
 
-inline auto WRITE_PU_S2C_GAME_START(int32 &refLength, vector<string> Users)
+inline auto WRITE_PU_S2C_GAME_START(int32 &refLength, vector<shared_ptr<ContentSession>> &Users, Position pos)
 {
-	auto UserNicks = builder.CreateVectorOfStrings(Users);
-	auto makePacket = CreateS2C_GAME_START(builder, UserNicks);
+	vector<flatbuffers::Offset<InitUserInfo>> user_vector;
+	for (auto &i : Users)
+	{
+		auto UserNicks = builder.CreateString(i->nickname);
+		auto playerPos = Vec3(i->pos.x, i->pos.y, i->pos.z);
+		auto makeTable = CreateInitUserInfo(builder, UserNicks, &playerPos);
+		user_vector.push_back(makeTable);
+	}
+	auto datas = builder.CreateVector(user_vector);
+	auto makePacket = CreateS2C_GAME_START(builder, datas);
 	auto packet = CreateMessage(builder, MESSAGE_ID::MESSAGE_ID_S2C_GAME_START, makePacket.Union());
 
 	builder.Finish(packet);

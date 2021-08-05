@@ -2,10 +2,8 @@
 #include "CorePch.h"
 #include "Database.h"
 #include "flatbuffers/flatbuffers.h"
-//#include "../Packet/UdpProtocol_generated.h"
-//#include "Udp_ReadPacket.h"
-//#include "Udp_WritePacket.h"
 #include "SocketWorker.h"
+
 int main()
 {
 	cout << "Start!!" << endl;

@@ -92,7 +92,14 @@ table C2S_START_MATCHING
   nickname: string;
 }
 
+table InitUserInfo
+{
+  nickname: string;
+  pos: Vec3;
+}
+
 table S2C_GAME_START
 {
-  players: [string];
+  userdata: [InitUserInfo];
 }
+
