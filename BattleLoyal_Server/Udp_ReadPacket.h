@@ -74,4 +74,10 @@ inline auto READ_PU_C2S_START_MATCHING(const C2S_START_MATCHING* packet)
 	return nickname;
 }
 
+inline auto READ_PU_C2S_CANCEL_MATCHING(const C2S_CANCEL_MATCHING* packet)
+{
+	string nickname = packet->nickname()->c_str();
+	return nickname;
+}
+
 //C2S Protocol Define

@@ -21,8 +21,8 @@ void SocketWorker::Init()
 	mWriteEvent = CreateEvent(0, false, false, NULL);
 	DBManager.SQL_INIT();
 	//Define Init Position
-	mInitPos.push_back(Position{ 6, -1.45, 2 });
-	mInitPos.push_back(Position{ -6, -1.45, -2 });
+	mInitPos.push_back(Position{ 6.0f, -1.45f, 2.0f });
+	mInitPos.push_back(Position{ -6.0f, -1.45f, -2.0f });
 
 	for (int32 i = 0; i < 8; i++) //8 WorkerThreads
 	{
@@ -200,8 +200,26 @@ RETRY:
 		if (mContentSession.size() == ROOM_MAX_NUM)
 		{
 			GameStart();
+			mContentSessionVec.push_back(ContentSessions{mContentSession, ROOM_NUM - 1});
+			mContentSession.clear();
 		}
 		mLock.LeaveWriteLock();
+		break;
+	}
+	case MESSAGE_ID::MESSAGE_ID_C2S_CANCEL_MATCHING:
+	{
+		auto RecvData = static_cast<const C2S_CANCEL_MATCHING*>(message->packet());
+
+		mLock.EnterWriteLock();
+		auto nickname = READ_PU_C2S_CANCEL_MATCHING(RecvData);
+		shared_ptr<ContentSession> contentSession = FindContentSession(nickname);
+
+		mContentSession.erase(std::remove(mContentSession.begin(), mContentSession.end(), contentSession), mContentSession.end());
+		//여기 에러..ContentSession을 지우면 해당 자식 객체까지 nullptr되버림
+
+		cout << mContentSession.size() << endl;
+		mLock.LeaveWriteLock();
+		break;
 	}
 
 	//Process of according to Protocol
@@ -295,6 +313,15 @@ auto SocketWorker::FindContentSession(int32 RoomNum)
 			returnVec.push_back(i);
 	}
 	return returnVec;
+}
+
+shared_ptr<ContentSession> SocketWorker::FindContentSession(string nickname)
+{
+	for (auto &i : mContentSession)
+	{
+		if (i->nickname == nickname)
+			return i;
+	}
 }
 
 void SocketWorker::GameStart()

@@ -11,6 +11,7 @@ union MESSAGE_ID
   S2C_LOGIN_ERROR,
   S2C_REGISTER_ERROR,
   C2S_START_MATCHING,
+  C2S_CANCEL_MATCHING,
   S2C_GAME_START
 }
 
@@ -101,5 +102,10 @@ table InitUserInfo
 table S2C_GAME_START
 {
   userdata: [InitUserInfo];
+}
+
+table C2S_CANCEL_MATCHING
+{
+  nickname: string;
 }
 
