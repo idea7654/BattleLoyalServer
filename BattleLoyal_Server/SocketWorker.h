@@ -19,7 +19,7 @@ public:
 	SocketWorker();
 	~SocketWorker();
 
-protected:
+public:
 	struct ContentSessions
 	{
 		vector<shared_ptr<ContentSession>>	Sessions;
@@ -38,6 +38,7 @@ public:
 	shared_ptr<Session>			FindSession(string nickname);
 	auto						FindContentSession(int32 RoomNum);
 	shared_ptr<ContentSession>	FindContentSession(string nickname);
+	ContentSessions				FindContentSessionInVec(int32 RoomNum);
 	void						GameStart();
 	void						SetUserPosition(vector<shared_ptr<ContentSession>> &sessions);
 
@@ -47,7 +48,7 @@ private:
 	vector<shared_ptr<ContentSession>>		mContentSession;
 	vector<ContentSessions>					mContentSessionVec;
 	vector<Position>						mInitPos;
-	int32									ROOM_MAX_NUM = 2;
-	uint16										ROOM_NUM = 1;
+	int32									ROOM_MAX_NUM = 1;
+	uint16									ROOM_NUM = 0;
 };
 

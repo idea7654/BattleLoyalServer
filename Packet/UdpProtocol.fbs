@@ -32,7 +32,8 @@ table S2C_MOVE
 {
   nick_name:string;
   pos: Vec3;
-  dir: Vec3;
+  dir: float;
+  movedir: int;
 }
 
 table S2C_SHOOT
@@ -46,7 +47,8 @@ table C2S_MOVE
 {
   nick_name:string;
   pos: Vec3;
-  dir: Vec3;
+  dir: float;
+  movedir: int;
 }
 
 table C2S_EXTEND_SESSION

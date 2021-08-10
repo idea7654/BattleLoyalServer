@@ -2,13 +2,12 @@
 
 static flatbuffers::FlatBufferBuilder builder(1024);
 
-inline auto WRITE_PU_S2C_MOVE(string nickname, Position &pos, Direction &dir, int32 &refLength)
+inline auto WRITE_PU_S2C_MOVE(string nickname, Position &pos, float dir, int32 moveDir, int32 &refLength)
 {
 	auto playerName = builder.CreateString(nickname);
 	auto playerPos = Vec3(pos.x, pos.y, pos.z);
-	auto playerDir = Vec3(dir.x, dir.y, dir.z);
 
-	auto makePacket = CreateS2C_MOVE(builder, playerName, &playerPos, &playerDir);
+	auto makePacket = CreateS2C_MOVE(builder, playerName, &playerPos, dir, moveDir);
 	auto packet = CreateMessage(builder, MESSAGE_ID::MESSAGE_ID_S2C_MOVE, makePacket.Union());
 
 	builder.Finish(packet);
@@ -97,3 +96,4 @@ inline auto WRITE_PU_S2C_GAME_START(int32 &refLength, vector<shared_ptr<ContentS
 	builder.Clear();
 	return data;
 }
+

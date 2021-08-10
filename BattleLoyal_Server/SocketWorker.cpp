@@ -100,19 +100,28 @@ RETRY:
 
 	auto message = GetMessage(packet);
 	auto protocol = message->packet_type();
+
 	switch (protocol)
 	{
 	case MESSAGE_ID::MESSAGE_ID_C2S_MOVE:
 	{
 		auto RecvData = static_cast<const C2S_MOVE*>(message->packet());
-		READ_PU_C2S_MOVE(RecvData);
-		/*Testing*/
+		string nickname;
+		Position userPos;
+		float userDir;
+		int32 moveDir;
+		READ_PU_C2S_MOVE(RecvData, nickname, userPos, userDir, moveDir);
 
-		Position pos{ 1.0f, 2.0f, 3.0f };
-		Direction dir{ 1.0f, 2.0f, 3.0f };
 		int32 size = 0;
-		auto data = WRITE_PU_S2C_MOVE("Edea", pos, dir, size);
-		WriteTo(remoteAddress, remotePort, data, size);
+		auto data = WRITE_PU_S2C_MOVE(nickname, userPos, userDir, moveDir, size);
+		//WriteTo(remoteAddress, remotePort, data, size);
+		//여기서 방을 찾고...broadCasting
+		auto userRoomNum = FindSession(nickname)->RoomNum;
+		ContentSessions roomUsers = FindContentSessionInVec(userRoomNum);
+		for (auto &i : roomUsers.Sessions)
+		{
+			WriteTo(i->remoteAddress, i->port, data, size);
+		}
 		break;
 	}
 	/*Echo Sample*/
@@ -129,7 +138,7 @@ RETRY:
 	{
 		auto RecvData = static_cast<const C2S_REQUEST_LOGIN*>(message->packet());
 
-		mLock.EnterWriteLock();
+		//mLock.EnterWriteLock();
 		auto returnData = READ_PU_C2S_REQUEST_LOGIN(RecvData);
 		if (returnData == "Incorrect_Email")
 		{
@@ -148,16 +157,20 @@ RETRY:
 			int32 dataLength = 0;
 			auto packetData = WRITE_PU_S2C_COMPLETE_LOGIN(returnData, dataLength);
 			WriteTo(remoteAddress, remotePort, packetData, dataLength);
+			//char nick[20];
+			//memcpy(nick, returnData, sizeof(returnData));
+			const char* nick = returnData;
 			auto user = MakeShared<Session>();
 			user->isOnline = 10;
-			user->nickname = returnData;
+			user->nickname = nick;
 			user->remoteAddress = remoteAddress;
 			user->port = remotePort;
 			user->RoomNum = 0;
-			mUserSession.push_back(user);
+			mLock.EnterWriteLock();
+			mUserSession.emplace_back(user);
+			mLock.LeaveWriteLock();
 		}
-		
-		mLock.LeaveWriteLock();
+		//mLock.LeaveWriteLock();
 		break;
 	}
 	case MESSAGE_ID::MESSAGE_ID_C2S_REQUEST_REGISTER:
@@ -212,13 +225,12 @@ RETRY:
 
 		mLock.EnterWriteLock();
 		auto nickname = READ_PU_C2S_CANCEL_MATCHING(RecvData);
+		auto originUser = FindSession(nickname);
 		shared_ptr<ContentSession> contentSession = FindContentSession(nickname);
+		mContentSession.erase(remove_if(begin(mContentSession), end(mContentSession), [nickname](shared_ptr<ContentSession> const &o) { return o->nickname == nickname; }), end(mContentSession));
 
-		mContentSession.erase(std::remove(mContentSession.begin(), mContentSession.end(), contentSession), mContentSession.end());
-		//여기 에러..ContentSession을 지우면 해당 자식 객체까지 nullptr되버림
-
-		cout << mContentSession.size() << endl;
 		mLock.LeaveWriteLock();
+		
 		break;
 	}
 
@@ -243,7 +255,6 @@ void SocketWorker::WriteEvent()
 	uint16 remotePort = 0;
 	if (!mWriteQueue.Pop(mWriteBuffer, dataLength, remoteAddress, remotePort))
 		return;
-	mLock.LeaveWriteLock();
 
 	mClientInfo.sin_family = AF_INET;
 	mClientInfo.sin_addr.s_addr = inet_addr(remoteAddress);
@@ -252,6 +263,7 @@ void SocketWorker::WriteEvent()
 	int32 returnVal = sendto(mSocket, mWriteBuffer, dataLength, 0, (SOCKADDR*)&mClientInfo, sizeof(mClientInfo));
 	if (returnVal < 0)
 		return;
+	mLock.LeaveWriteLock();
 }
 
 bool SocketWorker::CheckPacketNum(Session &session, uint32 PacketNumber)
@@ -298,7 +310,8 @@ shared_ptr<Session> SocketWorker::FindSession(string nickname)
 {
 	for (auto &i : mUserSession)
 	{
-		if (i->nickname == nickname)
+		string str(i->nickname);
+		if (str == nickname)
 			return i;
 	}
 	return nullptr;
@@ -319,9 +332,16 @@ shared_ptr<ContentSession> SocketWorker::FindContentSession(string nickname)
 {
 	for (auto &i : mContentSession)
 	{
-		if (i->nickname == nickname)
+		string str(i->nickname);
+		if (str == nickname)
 			return i;
 	}
+}
+
+SocketWorker::ContentSessions SocketWorker::FindContentSessionInVec(int32 RoomNum)
+{
+	auto roomInfo = mContentSessionVec[RoomNum];
+	return roomInfo;
 }
 
 void SocketWorker::GameStart()
@@ -344,5 +364,6 @@ void SocketWorker::SetUserPosition(vector<shared_ptr<ContentSession>> &sessions)
 	for (auto &i : sessions)
 	{
 		i->pos = mInitPos[j];
+		j++;
 	}
 }

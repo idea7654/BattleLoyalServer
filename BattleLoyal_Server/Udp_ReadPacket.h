@@ -1,9 +1,12 @@
 #pragma once
 #include "Database.h"
-inline auto READ_PU_C2S_MOVE(const C2S_MOVE *packet)
+inline auto READ_PU_C2S_MOVE(const C2S_MOVE *packet, string &userName, Position &userPos, float &userDir, int32 &moveDir)
 {
-	string userName = packet->nick_name()->c_str();
-	cout << "User Move!" << endl;
+	userName = packet->nick_name()->c_str();
+	//userPos = Position{ packet->pos()->x, packet->pos()->y, packet->pos()->z };
+	userPos = Position{ packet->pos()->x(), packet->pos()->y(), packet->pos()->z() };
+	userDir = packet->dir();
+	moveDir = packet->movedir();
 }
 
 inline auto READ_PU_C2S_EXTEND_SESSION(const C2S_EXTEND_SESSION* packet, vector<shared_ptr<Session>> &sessions)
@@ -53,6 +56,8 @@ inline auto READ_PU_C2S_REQUEST_LOGIN(const C2S_REQUEST_LOGIN* packet)
 			return (char*)"Incorrect_Email";
 		}
 	}
+
+	return (char*)"Incorrect_Email";
 }
 
 inline auto READ_PU_C2S_REQUEST_REGISTER(const C2S_REQUEST_REGISTER* packet, char* remoteAddress, uint16 remotePort)

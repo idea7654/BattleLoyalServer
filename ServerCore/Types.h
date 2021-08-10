@@ -29,7 +29,7 @@ struct Direction
 struct Session
 {
 	char*	remoteAddress;
-	char*	nickname;
+	std::string	nickname;
 	uint16	port;
 	uint16	isOnline = 10;
 	uint32	RoomNum;
