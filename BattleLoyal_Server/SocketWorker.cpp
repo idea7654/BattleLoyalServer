@@ -350,10 +350,11 @@ void SocketWorker::GameStart()
 	ROOM_NUM++;
 	auto RoomUsers = FindContentSession(OriginRoomNum);
 	SetUserPosition(RoomUsers);
+	vector<SessionGun> GunInfo = SetGunPosition();
 	for (auto &i : RoomUsers)
 	{
 		int32 packetLength = 0;
-		auto packet = WRITE_PU_S2C_GAME_START(packetLength, RoomUsers, i->pos);
+		auto packet = WRITE_PU_S2C_GAME_START(packetLength, RoomUsers, i->pos, GunInfo);
 		WriteTo(i->remoteAddress, i->port, packet, packetLength);
 	}
 }
@@ -366,4 +367,15 @@ void SocketWorker::SetUserPosition(vector<shared_ptr<ContentSession>> &sessions)
 		i->pos = mInitPos[j];
 		j++;
 	}
+}
+
+vector<SessionGun> SocketWorker::SetGunPosition()
+{
+	vector<SessionGun> sessionGun;
+	for (int32 i = 0; i < GUN_MAX_NUM; i++)
+	{
+		auto a = Position{ 5.95f, -1.54f, -5.21f };
+		sessionGun.emplace_back(SessionGun{ a, Gun::NORMAL });
+	}
+	return sessionGun;
 }

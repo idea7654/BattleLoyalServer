@@ -12,7 +12,8 @@ union MESSAGE_ID
   S2C_REGISTER_ERROR,
   C2S_START_MATCHING,
   C2S_CANCEL_MATCHING,
-  S2C_GAME_START
+  S2C_GAME_START,
+  C2S_PICKUP_GUN
 }
 
 struct Vec3{
@@ -101,13 +102,26 @@ table InitUserInfo
   pos: Vec3;
 }
 
+table InitGunInfo
+{
+  type: int;
+  pos: Vec3;
+}
+
 table S2C_GAME_START
 {
   userdata: [InitUserInfo];
+  gundata: [InitGunInfo];
 }
 
 table C2S_CANCEL_MATCHING
 {
   nickname: string;
+}
+
+table C2S_PICKUP_GUN
+{
+  nickname: string;
+  gunnum: int;
 }
 

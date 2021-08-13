@@ -13,6 +13,12 @@ struct ContentSession : Session
 	float hp;
 };
 
+struct SessionGun
+{
+	Position Gun_pos;
+	Gun Gun_Type;
+};
+
 class SocketWorker : public SocketUtils
 {
 public:
@@ -41,14 +47,15 @@ public:
 	ContentSessions				FindContentSessionInVec(int32 RoomNum);
 	void						GameStart();
 	void						SetUserPosition(vector<shared_ptr<ContentSession>> &sessions);
-
+	vector<SessionGun>			SetGunPosition();
 private:
 	vector<thread>							mThreadPool;
 	vector<shared_ptr<Session>>				mUserSession;
 	vector<shared_ptr<ContentSession>>		mContentSession;
 	vector<ContentSessions>					mContentSessionVec;
 	vector<Position>						mInitPos;
-	int32									ROOM_MAX_NUM = 1;
+	uint16									ROOM_MAX_NUM = 1;
+	uint16									GUN_MAX_NUM = 1;
 	uint16									ROOM_NUM = 0;
 };
 

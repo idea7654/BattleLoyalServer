@@ -75,9 +75,10 @@ inline auto WRITE_PU_S2C_REGISTER_ERROR(int32 &refLength, string errMessage)
 	return data;
 }
 
-inline auto WRITE_PU_S2C_GAME_START(int32 &refLength, vector<shared_ptr<ContentSession>> &Users, Position pos)
+inline auto WRITE_PU_S2C_GAME_START(int32 &refLength, vector<shared_ptr<ContentSession>> &Users, Position pos, vector<SessionGun> &SessionGun)
 {
 	vector<flatbuffers::Offset<InitUserInfo>> user_vector;
+	vector<flatbuffers::Offset<InitGunInfo>> gun_vector;
 	for (auto &i : Users)
 	{
 		auto UserNicks = builder.CreateString(i->nickname);
@@ -85,8 +86,17 @@ inline auto WRITE_PU_S2C_GAME_START(int32 &refLength, vector<shared_ptr<ContentS
 		auto makeTable = CreateInitUserInfo(builder, UserNicks, &playerPos);
 		user_vector.push_back(makeTable);
 	}
+
+	for (auto &i : SessionGun)
+	{
+		int32 type = (int32)i.Gun_Type;
+		auto gunPos = Vec3(i.Gun_pos.x, i.Gun_pos.y, i.Gun_pos.z);
+		auto makeTable = CreateInitGunInfo(builder, type, &gunPos);
+		gun_vector.push_back(makeTable);
+	}
 	auto datas = builder.CreateVector(user_vector);
-	auto makePacket = CreateS2C_GAME_START(builder, datas);
+	auto guns = builder.CreateVector(gun_vector);
+	auto makePacket = CreateS2C_GAME_START(builder, datas, guns);
 	auto packet = CreateMessage(builder, MESSAGE_ID::MESSAGE_ID_S2C_GAME_START, makePacket.Union());
 
 	builder.Finish(packet);
