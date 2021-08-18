@@ -228,9 +228,25 @@ RETRY:
 		auto originUser = FindSession(nickname);
 		shared_ptr<ContentSession> contentSession = FindContentSession(nickname);
 		mContentSession.erase(remove_if(begin(mContentSession), end(mContentSession), [nickname](shared_ptr<ContentSession> const &o) { return o->nickname == nickname; }), end(mContentSession));
-
 		mLock.LeaveWriteLock();
-		
+
+		break;
+	}
+	case MESSAGE_ID::MESSAGE_ID_C2S_PICKUP_GUN:
+	{
+		auto RecvData = static_cast<const C2S_PICKUP_GUN*>(message->packet());
+		int32 packetLen = 0;
+		mLock.EnterWriteLock();
+		int32 gunNum = 0;
+		auto nickname = READ_PU_C2S_PICKUP_GUN(RecvData, gunNum);
+		auto userSession = FindSession(nickname);
+		auto userRoom = FindContentSessionInVec(userSession->RoomNum);
+		auto packet = WRITE_PU_S2C_PICKUP_GUN(packetLen, nickname, gunNum);
+		for (auto &i : userRoom.Sessions)
+		{
+			WriteTo(i->remoteAddress, i->port, packet, packetLen);
+		}
+		mLock.LeaveWriteLock();
 		break;
 	}
 

@@ -59,6 +59,9 @@ struct C2S_CANCEL_MATCHINGBuilder;
 struct C2S_PICKUP_GUN;
 struct C2S_PICKUP_GUNBuilder;
 
+struct S2C_PICKUP_GUN;
+struct S2C_PICKUP_GUNBuilder;
+
 enum MESSAGE_ID : uint8_t {
   MESSAGE_ID_NONE = 0,
   MESSAGE_ID_S2C_MOVE = 1,
@@ -75,11 +78,12 @@ enum MESSAGE_ID : uint8_t {
   MESSAGE_ID_C2S_CANCEL_MATCHING = 12,
   MESSAGE_ID_S2C_GAME_START = 13,
   MESSAGE_ID_C2S_PICKUP_GUN = 14,
+  MESSAGE_ID_S2C_PICKUP_GUN = 15,
   MESSAGE_ID_MIN = MESSAGE_ID_NONE,
-  MESSAGE_ID_MAX = MESSAGE_ID_C2S_PICKUP_GUN
+  MESSAGE_ID_MAX = MESSAGE_ID_S2C_PICKUP_GUN
 };
 
-inline const MESSAGE_ID (&EnumValuesMESSAGE_ID())[15] {
+inline const MESSAGE_ID (&EnumValuesMESSAGE_ID())[16] {
   static const MESSAGE_ID values[] = {
     MESSAGE_ID_NONE,
     MESSAGE_ID_S2C_MOVE,
@@ -95,13 +99,14 @@ inline const MESSAGE_ID (&EnumValuesMESSAGE_ID())[15] {
     MESSAGE_ID_C2S_START_MATCHING,
     MESSAGE_ID_C2S_CANCEL_MATCHING,
     MESSAGE_ID_S2C_GAME_START,
-    MESSAGE_ID_C2S_PICKUP_GUN
+    MESSAGE_ID_C2S_PICKUP_GUN,
+    MESSAGE_ID_S2C_PICKUP_GUN
   };
   return values;
 }
 
 inline const char * const *EnumNamesMESSAGE_ID() {
-  static const char * const names[16] = {
+  static const char * const names[17] = {
     "NONE",
     "S2C_MOVE",
     "S2C_SHOOT",
@@ -117,13 +122,14 @@ inline const char * const *EnumNamesMESSAGE_ID() {
     "C2S_CANCEL_MATCHING",
     "S2C_GAME_START",
     "C2S_PICKUP_GUN",
+    "S2C_PICKUP_GUN",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameMESSAGE_ID(MESSAGE_ID e) {
-  if (flatbuffers::IsOutRange(e, MESSAGE_ID_NONE, MESSAGE_ID_C2S_PICKUP_GUN)) return "";
+  if (flatbuffers::IsOutRange(e, MESSAGE_ID_NONE, MESSAGE_ID_S2C_PICKUP_GUN)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesMESSAGE_ID()[index];
 }
@@ -186,6 +192,10 @@ template<> struct MESSAGE_IDTraits<S2C_GAME_START> {
 
 template<> struct MESSAGE_IDTraits<C2S_PICKUP_GUN> {
   static const MESSAGE_ID enum_value = MESSAGE_ID_C2S_PICKUP_GUN;
+};
+
+template<> struct MESSAGE_IDTraits<S2C_PICKUP_GUN> {
+  static const MESSAGE_ID enum_value = MESSAGE_ID_S2C_PICKUP_GUN;
 };
 
 bool VerifyMESSAGE_ID(flatbuffers::Verifier &verifier, const void *obj, MESSAGE_ID type);
@@ -275,6 +285,9 @@ struct Message FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const C2S_PICKUP_GUN *packet_as_C2S_PICKUP_GUN() const {
     return packet_type() == MESSAGE_ID_C2S_PICKUP_GUN ? static_cast<const C2S_PICKUP_GUN *>(packet()) : nullptr;
   }
+  const S2C_PICKUP_GUN *packet_as_S2C_PICKUP_GUN() const {
+    return packet_type() == MESSAGE_ID_S2C_PICKUP_GUN ? static_cast<const S2C_PICKUP_GUN *>(packet()) : nullptr;
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint8_t>(verifier, VT_PACKET_TYPE) &&
@@ -338,6 +351,10 @@ template<> inline const S2C_GAME_START *Message::packet_as<S2C_GAME_START>() con
 
 template<> inline const C2S_PICKUP_GUN *Message::packet_as<C2S_PICKUP_GUN>() const {
   return packet_as_C2S_PICKUP_GUN();
+}
+
+template<> inline const S2C_PICKUP_GUN *Message::packet_as<S2C_PICKUP_GUN>() const {
+  return packet_as_S2C_PICKUP_GUN();
 }
 
 struct MessageBuilder {
@@ -1355,6 +1372,69 @@ inline flatbuffers::Offset<C2S_PICKUP_GUN> CreateC2S_PICKUP_GUNDirect(
       gunnum);
 }
 
+struct S2C_PICKUP_GUN FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef S2C_PICKUP_GUNBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_NICKNAME = 4,
+    VT_GUNNUM = 6
+  };
+  const flatbuffers::String *nickname() const {
+    return GetPointer<const flatbuffers::String *>(VT_NICKNAME);
+  }
+  int32_t gunnum() const {
+    return GetField<int32_t>(VT_GUNNUM, 0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_NICKNAME) &&
+           verifier.VerifyString(nickname()) &&
+           VerifyField<int32_t>(verifier, VT_GUNNUM) &&
+           verifier.EndTable();
+  }
+};
+
+struct S2C_PICKUP_GUNBuilder {
+  typedef S2C_PICKUP_GUN Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_nickname(flatbuffers::Offset<flatbuffers::String> nickname) {
+    fbb_.AddOffset(S2C_PICKUP_GUN::VT_NICKNAME, nickname);
+  }
+  void add_gunnum(int32_t gunnum) {
+    fbb_.AddElement<int32_t>(S2C_PICKUP_GUN::VT_GUNNUM, gunnum, 0);
+  }
+  explicit S2C_PICKUP_GUNBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<S2C_PICKUP_GUN> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<S2C_PICKUP_GUN>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<S2C_PICKUP_GUN> CreateS2C_PICKUP_GUN(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::String> nickname = 0,
+    int32_t gunnum = 0) {
+  S2C_PICKUP_GUNBuilder builder_(_fbb);
+  builder_.add_gunnum(gunnum);
+  builder_.add_nickname(nickname);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<S2C_PICKUP_GUN> CreateS2C_PICKUP_GUNDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const char *nickname = nullptr,
+    int32_t gunnum = 0) {
+  auto nickname__ = nickname ? _fbb.CreateString(nickname) : 0;
+  return CreateS2C_PICKUP_GUN(
+      _fbb,
+      nickname__,
+      gunnum);
+}
+
 inline bool VerifyMESSAGE_ID(flatbuffers::Verifier &verifier, const void *obj, MESSAGE_ID type) {
   switch (type) {
     case MESSAGE_ID_NONE: {
@@ -1414,6 +1494,10 @@ inline bool VerifyMESSAGE_ID(flatbuffers::Verifier &verifier, const void *obj, M
     }
     case MESSAGE_ID_C2S_PICKUP_GUN: {
       auto ptr = reinterpret_cast<const C2S_PICKUP_GUN *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case MESSAGE_ID_S2C_PICKUP_GUN: {
+      auto ptr = reinterpret_cast<const S2C_PICKUP_GUN *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return true;

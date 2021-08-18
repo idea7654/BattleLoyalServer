@@ -107,3 +107,16 @@ inline auto WRITE_PU_S2C_GAME_START(int32 &refLength, vector<shared_ptr<ContentS
 	return data;
 }
 
+inline auto WRITE_PU_S2C_PICKUP_GUN(int32 &refLength, string nickname, int32 gunNum)
+{
+	auto nickName = builder.CreateString(nickname);
+	auto makePacket = CreateS2C_PICKUP_GUN(builder, nickName, gunNum);
+	auto packet = CreateMessage(builder, MESSAGE_ID::MESSAGE_ID_S2C_PICKUP_GUN, makePacket.Union());
+
+	builder.Finish(packet);
+	refLength = builder.GetSize();
+
+	auto data = builder.GetBufferPointer();
+	builder.Clear();
+	return data;
+}

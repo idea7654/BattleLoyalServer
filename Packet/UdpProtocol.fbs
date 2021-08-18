@@ -13,7 +13,8 @@ union MESSAGE_ID
   C2S_START_MATCHING,
   C2S_CANCEL_MATCHING,
   S2C_GAME_START,
-  C2S_PICKUP_GUN
+  C2S_PICKUP_GUN,
+  S2C_PICKUP_GUN
 }
 
 struct Vec3{
@@ -125,3 +126,8 @@ table C2S_PICKUP_GUN
   gunnum: int;
 }
 
+table S2C_PICKUP_GUN
+{
+  nickname: string;
+  gunnum: int;
+}
