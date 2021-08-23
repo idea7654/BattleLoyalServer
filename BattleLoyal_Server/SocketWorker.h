@@ -57,5 +57,6 @@ private:
 	uint16									ROOM_MAX_NUM = 1;
 	uint16									GUN_MAX_NUM = 1;
 	uint16									ROOM_NUM = 0;
+	uint16									SESSION_REDUCE_TIME = 1000;
 };
 

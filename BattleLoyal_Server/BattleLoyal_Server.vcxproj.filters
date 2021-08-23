@@ -13,6 +13,9 @@
     <Filter Include="Packet">
       <UniqueIdentifier>{caecf342-d7eb-47a0-9bb5-5268e2f8ebe9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Contents">
+      <UniqueIdentifier>{aed05ec8-b346-4c24-a85e-48f788d4a013}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BattleLoyal_Server.cpp">
@@ -24,6 +27,7 @@
     <ClCompile Include="SocketWorker.cpp">
       <Filter>Network</Filter>
     </ClCompile>
+    <ClCompile Include="GameSession.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -41,5 +45,6 @@
     <ClInclude Include="Udp_WritePacket.h">
       <Filter>Packet</Filter>
     </ClInclude>
+    <ClInclude Include="GameSession.h" />
   </ItemGroup>
 </Project>

@@ -116,11 +116,18 @@ RETRY:
 		auto data = WRITE_PU_S2C_MOVE(nickname, userPos, userDir, moveDir, size);
 		//WriteTo(remoteAddress, remotePort, data, size);
 		//여기서 방을 찾고...broadCasting
-		auto userRoomNum = FindSession(nickname)->RoomNum;
-		ContentSessions roomUsers = FindContentSessionInVec(userRoomNum);
-		for (auto &i : roomUsers.Sessions)
+		if (FindSession(nickname) == nullptr)
 		{
-			WriteTo(i->remoteAddress, i->port, data, size);
+			//접속 끊어진 유저..로그아웃 처리
+			break;
+		}
+		else {
+			auto userRoomNum = FindSession(nickname)->RoomNum;
+			ContentSessions roomUsers = FindContentSessionInVec(userRoomNum);
+			for (auto &i : roomUsers.Sessions)
+			{
+				WriteTo(i->remoteAddress, i->port, data, size);
+			}
 		}
 		break;
 	}
@@ -153,13 +160,14 @@ RETRY:
 			if (overLogin)
 			{
 				//LOGIN_ERROR->중복로그인 처리
+				
 			}
 			int32 dataLength = 0;
 			auto packetData = WRITE_PU_S2C_COMPLETE_LOGIN(returnData, dataLength);
 			WriteTo(remoteAddress, remotePort, packetData, dataLength);
 			//char nick[20];
 			//memcpy(nick, returnData, sizeof(returnData));
-			const char* nick = returnData;
+			string nick = returnData;
 			auto user = MakeShared<Session>();
 			user->isOnline = 10;
 			user->nickname = nick;
@@ -202,6 +210,11 @@ RETRY:
 		mLock.EnterWriteLock();
 		auto nickname = READ_PU_C2S_START_MATCHING(RecvData);
 		auto originSession = FindSession(nickname);
+		if (originSession == nullptr)
+		{
+			//로그아웃 처리...
+			break;
+		}
 		auto contentSession = MakeShared<ContentSession>();
 		contentSession->PacketNum = originSession->PacketNum;
 		contentSession->remoteAddress = originSession->remoteAddress;
@@ -226,6 +239,11 @@ RETRY:
 		mLock.EnterWriteLock();
 		auto nickname = READ_PU_C2S_CANCEL_MATCHING(RecvData);
 		auto originUser = FindSession(nickname);
+		if (originUser == nullptr)
+		{
+			//로그아웃처리..
+			break;
+		}
 		shared_ptr<ContentSession> contentSession = FindContentSession(nickname);
 		mContentSession.erase(remove_if(begin(mContentSession), end(mContentSession), [nickname](shared_ptr<ContentSession> const &o) { return o->nickname == nickname; }), end(mContentSession));
 		mLock.LeaveWriteLock();
@@ -240,6 +258,11 @@ RETRY:
 		int32 gunNum = 0;
 		auto nickname = READ_PU_C2S_PICKUP_GUN(RecvData, gunNum);
 		auto userSession = FindSession(nickname);
+		if (userSession == nullptr)
+		{
+			//로그아웃처리...
+			break;
+		}
 		auto userRoom = FindContentSessionInVec(userSession->RoomNum);
 		auto packet = WRITE_PU_S2C_PICKUP_GUN(packetLen, nickname, gunNum);
 		for (auto &i : userRoom.Sessions)
@@ -289,27 +312,30 @@ bool SocketWorker::CheckPacketNum(Session &session, uint32 PacketNumber)
 
 void SocketWorker::ReduceSessionTime() //Reduce SessionTime which in SessionVector, Use with Thread
 {
-	vector<shared_ptr<Session>> removeList;
-	mLock.EnterReadLock();
-	for (auto &i : mUserSession)
+	while (true)
 	{
-		mLock.EnterWriteLock();
-		i->isOnline--;
-		mLock.LeaveWriteLock();
-		if (i->isOnline < 0)
-			removeList.push_back(i);
-	}
-	mLock.LeaveReadLock();
-	for (auto &i : removeList)
-	{
-		mLock.EnterWriteLock();
-		//mUserSession.erase(std::remove(mUserSession.begin(), mUserSession.end(), i), mUserSession.end());
-		for (std::vector<shared_ptr<Session>>::iterator it = mUserSession.begin(); it != mUserSession.end(); it++)
+		vector<shared_ptr<Session>> removeList;
+		mLock.EnterReadLock();
+		for (auto &i : mUserSession)
 		{
-			if ((*it)->remoteAddress == i->remoteAddress && (*it)->port == i->port)//구조체 vector의 id값이 4인 원소를 삭제
-				mUserSession.erase(it);
+			i->isOnline--;
+			if (i->isOnline < 1)
+				removeList.push_back(i);
 		}
-		mLock.LeaveWriteLock();
+		mLock.LeaveReadLock();
+		for (auto &i : removeList)
+		{
+			mLock.EnterWriteLock();
+			mUserSession.erase(std::remove(mUserSession.begin(), mUserSession.end(), i), mUserSession.end());
+			auto content = FindContentSession(i->nickname);
+			if (content != nullptr)
+			{
+				mContentSession.erase(remove(mContentSession.begin(), mContentSession.end(), content), mContentSession.end());
+			}
+			//로그아웃 함수로 따로 빼야함
+			mLock.LeaveWriteLock();
+		}
+		Sleep(SESSION_REDUCE_TIME);
 	}
 }
 
