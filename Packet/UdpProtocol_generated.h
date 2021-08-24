@@ -62,6 +62,9 @@ struct C2S_PICKUP_GUNBuilder;
 struct S2C_PICKUP_GUN;
 struct S2C_PICKUP_GUNBuilder;
 
+struct S2C_USER_NOT_FOUND;
+struct S2C_USER_NOT_FOUNDBuilder;
+
 enum MESSAGE_ID : uint8_t {
   MESSAGE_ID_NONE = 0,
   MESSAGE_ID_S2C_MOVE = 1,
@@ -79,11 +82,12 @@ enum MESSAGE_ID : uint8_t {
   MESSAGE_ID_S2C_GAME_START = 13,
   MESSAGE_ID_C2S_PICKUP_GUN = 14,
   MESSAGE_ID_S2C_PICKUP_GUN = 15,
+  MESSAGE_ID_S2C_USER_NOT_FOUND = 16,
   MESSAGE_ID_MIN = MESSAGE_ID_NONE,
-  MESSAGE_ID_MAX = MESSAGE_ID_S2C_PICKUP_GUN
+  MESSAGE_ID_MAX = MESSAGE_ID_S2C_USER_NOT_FOUND
 };
 
-inline const MESSAGE_ID (&EnumValuesMESSAGE_ID())[16] {
+inline const MESSAGE_ID (&EnumValuesMESSAGE_ID())[17] {
   static const MESSAGE_ID values[] = {
     MESSAGE_ID_NONE,
     MESSAGE_ID_S2C_MOVE,
@@ -100,13 +104,14 @@ inline const MESSAGE_ID (&EnumValuesMESSAGE_ID())[16] {
     MESSAGE_ID_C2S_CANCEL_MATCHING,
     MESSAGE_ID_S2C_GAME_START,
     MESSAGE_ID_C2S_PICKUP_GUN,
-    MESSAGE_ID_S2C_PICKUP_GUN
+    MESSAGE_ID_S2C_PICKUP_GUN,
+    MESSAGE_ID_S2C_USER_NOT_FOUND
   };
   return values;
 }
 
 inline const char * const *EnumNamesMESSAGE_ID() {
-  static const char * const names[17] = {
+  static const char * const names[18] = {
     "NONE",
     "S2C_MOVE",
     "S2C_SHOOT",
@@ -123,13 +128,14 @@ inline const char * const *EnumNamesMESSAGE_ID() {
     "S2C_GAME_START",
     "C2S_PICKUP_GUN",
     "S2C_PICKUP_GUN",
+    "S2C_USER_NOT_FOUND",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameMESSAGE_ID(MESSAGE_ID e) {
-  if (flatbuffers::IsOutRange(e, MESSAGE_ID_NONE, MESSAGE_ID_S2C_PICKUP_GUN)) return "";
+  if (flatbuffers::IsOutRange(e, MESSAGE_ID_NONE, MESSAGE_ID_S2C_USER_NOT_FOUND)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesMESSAGE_ID()[index];
 }
@@ -196,6 +202,10 @@ template<> struct MESSAGE_IDTraits<C2S_PICKUP_GUN> {
 
 template<> struct MESSAGE_IDTraits<S2C_PICKUP_GUN> {
   static const MESSAGE_ID enum_value = MESSAGE_ID_S2C_PICKUP_GUN;
+};
+
+template<> struct MESSAGE_IDTraits<S2C_USER_NOT_FOUND> {
+  static const MESSAGE_ID enum_value = MESSAGE_ID_S2C_USER_NOT_FOUND;
 };
 
 bool VerifyMESSAGE_ID(flatbuffers::Verifier &verifier, const void *obj, MESSAGE_ID type);
@@ -288,6 +298,9 @@ struct Message FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const S2C_PICKUP_GUN *packet_as_S2C_PICKUP_GUN() const {
     return packet_type() == MESSAGE_ID_S2C_PICKUP_GUN ? static_cast<const S2C_PICKUP_GUN *>(packet()) : nullptr;
   }
+  const S2C_USER_NOT_FOUND *packet_as_S2C_USER_NOT_FOUND() const {
+    return packet_type() == MESSAGE_ID_S2C_USER_NOT_FOUND ? static_cast<const S2C_USER_NOT_FOUND *>(packet()) : nullptr;
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint8_t>(verifier, VT_PACKET_TYPE) &&
@@ -355,6 +368,10 @@ template<> inline const C2S_PICKUP_GUN *Message::packet_as<C2S_PICKUP_GUN>() con
 
 template<> inline const S2C_PICKUP_GUN *Message::packet_as<S2C_PICKUP_GUN>() const {
   return packet_as_S2C_PICKUP_GUN();
+}
+
+template<> inline const S2C_USER_NOT_FOUND *Message::packet_as<S2C_USER_NOT_FOUND>() const {
+  return packet_as_S2C_USER_NOT_FOUND();
 }
 
 struct MessageBuilder {
@@ -1435,6 +1452,57 @@ inline flatbuffers::Offset<S2C_PICKUP_GUN> CreateS2C_PICKUP_GUNDirect(
       gunnum);
 }
 
+struct S2C_USER_NOT_FOUND FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef S2C_USER_NOT_FOUNDBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_MESSAGE = 4
+  };
+  const flatbuffers::String *message() const {
+    return GetPointer<const flatbuffers::String *>(VT_MESSAGE);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_MESSAGE) &&
+           verifier.VerifyString(message()) &&
+           verifier.EndTable();
+  }
+};
+
+struct S2C_USER_NOT_FOUNDBuilder {
+  typedef S2C_USER_NOT_FOUND Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_message(flatbuffers::Offset<flatbuffers::String> message) {
+    fbb_.AddOffset(S2C_USER_NOT_FOUND::VT_MESSAGE, message);
+  }
+  explicit S2C_USER_NOT_FOUNDBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<S2C_USER_NOT_FOUND> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<S2C_USER_NOT_FOUND>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<S2C_USER_NOT_FOUND> CreateS2C_USER_NOT_FOUND(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::String> message = 0) {
+  S2C_USER_NOT_FOUNDBuilder builder_(_fbb);
+  builder_.add_message(message);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<S2C_USER_NOT_FOUND> CreateS2C_USER_NOT_FOUNDDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const char *message = nullptr) {
+  auto message__ = message ? _fbb.CreateString(message) : 0;
+  return CreateS2C_USER_NOT_FOUND(
+      _fbb,
+      message__);
+}
+
 inline bool VerifyMESSAGE_ID(flatbuffers::Verifier &verifier, const void *obj, MESSAGE_ID type) {
   switch (type) {
     case MESSAGE_ID_NONE: {
@@ -1498,6 +1566,10 @@ inline bool VerifyMESSAGE_ID(flatbuffers::Verifier &verifier, const void *obj, M
     }
     case MESSAGE_ID_S2C_PICKUP_GUN: {
       auto ptr = reinterpret_cast<const S2C_PICKUP_GUN *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case MESSAGE_ID_S2C_USER_NOT_FOUND: {
+      auto ptr = reinterpret_cast<const S2C_USER_NOT_FOUND *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return true;

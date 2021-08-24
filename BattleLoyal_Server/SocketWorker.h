@@ -48,6 +48,8 @@ public:
 	void						GameStart();
 	void						SetUserPosition(vector<shared_ptr<ContentSession>> &sessions);
 	vector<SessionGun>			SetGunPosition();
+	void						UserNotFound(char* remoteAddress, uint16 port);
+	void						SessionOut(vector<shared_ptr<Session>> &Session);
 private:
 	vector<thread>							mThreadPool;
 	vector<shared_ptr<Session>>				mUserSession;

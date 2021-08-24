@@ -118,7 +118,7 @@ RETRY:
 		//여기서 방을 찾고...broadCasting
 		if (FindSession(nickname) == nullptr)
 		{
-			//접속 끊어진 유저..로그아웃 처리
+			UserNotFound(remoteAddress, remotePort);
 			break;
 		}
 		else {
@@ -135,10 +135,10 @@ RETRY:
 	case MESSAGE_ID::MESSAGE_ID_C2S_EXTEND_SESSION:
 	{
 		auto RecvSession = static_cast<const C2S_EXTEND_SESSION*>(message->packet());
-
 		mLock.EnterWriteLock();
 		READ_PU_C2S_EXTEND_SESSION(RecvSession, mUserSession);
 		mLock.LeaveWriteLock();
+
 		break;
 	}
 	case MESSAGE_ID::MESSAGE_ID_C2S_REQUEST_LOGIN:
@@ -212,7 +212,7 @@ RETRY:
 		auto originSession = FindSession(nickname);
 		if (originSession == nullptr)
 		{
-			//로그아웃 처리...
+			UserNotFound(remoteAddress, remotePort);
 			break;
 		}
 		auto contentSession = MakeShared<ContentSession>();
@@ -241,7 +241,7 @@ RETRY:
 		auto originUser = FindSession(nickname);
 		if (originUser == nullptr)
 		{
-			//로그아웃처리..
+			UserNotFound(remoteAddress, remotePort);
 			break;
 		}
 		shared_ptr<ContentSession> contentSession = FindContentSession(nickname);
@@ -260,7 +260,7 @@ RETRY:
 		auto userSession = FindSession(nickname);
 		if (userSession == nullptr)
 		{
-			//로그아웃처리...
+			UserNotFound(remoteAddress, remotePort);
 			break;
 		}
 		auto userRoom = FindContentSessionInVec(userSession->RoomNum);
@@ -323,18 +323,7 @@ void SocketWorker::ReduceSessionTime() //Reduce SessionTime which in SessionVect
 				removeList.push_back(i);
 		}
 		mLock.LeaveReadLock();
-		for (auto &i : removeList)
-		{
-			mLock.EnterWriteLock();
-			mUserSession.erase(std::remove(mUserSession.begin(), mUserSession.end(), i), mUserSession.end());
-			auto content = FindContentSession(i->nickname);
-			if (content != nullptr)
-			{
-				mContentSession.erase(remove(mContentSession.begin(), mContentSession.end(), content), mContentSession.end());
-			}
-			//로그아웃 함수로 따로 빼야함
-			mLock.LeaveWriteLock();
-		}
+		SessionOut(removeList);
 		Sleep(SESSION_REDUCE_TIME);
 	}
 }
@@ -420,4 +409,27 @@ vector<SessionGun> SocketWorker::SetGunPosition()
 		sessionGun.emplace_back(SessionGun{ a, Gun::NORMAL });
 	}
 	return sessionGun;
+}
+
+void SocketWorker::UserNotFound(char * remoteAddress, uint16 port)
+{
+	int32 size = 0;
+	auto packet = WRITE_PU_S2C_USER_NOT_FOUND(size);
+	WriteTo(remoteAddress, port, packet, size);
+}
+
+void SocketWorker::SessionOut(vector<shared_ptr<Session>>& Session)
+{
+	mLock.EnterWriteLock();
+	for (auto &i : Session)
+	{
+		mUserSession.erase(std::remove(mUserSession.begin(), mUserSession.end(), i), mUserSession.end());
+		auto content = FindContentSession(i->nickname);
+		if (content != nullptr)
+		{
+			//broadcasting...
+			mContentSession.erase(remove(mContentSession.begin(), mContentSession.end(), content), mContentSession.end());
+		}
+	}
+	mLock.LeaveWriteLock();
 }

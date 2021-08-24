@@ -120,3 +120,17 @@ inline auto WRITE_PU_S2C_PICKUP_GUN(int32 &refLength, string nickname, int32 gun
 	builder.Clear();
 	return data;
 }
+
+inline auto WRITE_PU_S2C_USER_NOT_FOUND(int32 &refLength)
+{
+	auto message = builder.CreateString("Error!");
+	auto makePacket = CreateS2C_USER_NOT_FOUND(builder, message);
+	auto packet = CreateMessage(builder, MESSAGE_ID::MESSAGE_ID_S2C_USER_NOT_FOUND, makePacket.Union());
+
+	builder.Finish(packet);
+	refLength = builder.GetSize();
+
+	auto data = builder.GetBufferPointer();
+	builder.Clear();
+	return data;
+}
