@@ -424,11 +424,22 @@ void SocketWorker::SessionOut(vector<shared_ptr<Session>>& Session)
 	for (auto &i : Session)
 	{
 		mUserSession.erase(std::remove(mUserSession.begin(), mUserSession.end(), i), mUserSession.end());
-		auto content = FindContentSession(i->nickname);
-		if (content != nullptr)
+
+		for (auto &j : mContentSessionVec)
 		{
-			//broadcasting...
-			mContentSession.erase(remove(mContentSession.begin(), mContentSession.end(), content), mContentSession.end());
+			if (i->RoomNum == j.ROOM_NUM)
+			{
+				j.Sessions.erase(remove_if(j.Sessions.begin(), j.Sessions.end(), [i](shared_ptr<ContentSession> userData) {
+					return !userData->nickname.compare(i->nickname);
+				}), j.Sessions.end());
+				for (auto &k : j.Sessions)
+				{
+					int32 size = 0;
+					auto makePacket = WRITE_PU_S2C_USER_DISCONNECT(size, i->nickname);
+					WriteTo(k->remoteAddress, k->port, makePacket, size);
+				}
+				break;
+			}
 		}
 	}
 	mLock.LeaveWriteLock();

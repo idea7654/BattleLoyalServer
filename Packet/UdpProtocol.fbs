@@ -15,7 +15,8 @@ union MESSAGE_ID
   S2C_GAME_START,
   C2S_PICKUP_GUN,
   S2C_PICKUP_GUN,
-  S2C_USER_NOT_FOUND
+  S2C_USER_NOT_FOUND,
+  S2C_USER_DISCONNECT
 }
 
 struct Vec3{
@@ -136,4 +137,9 @@ table S2C_PICKUP_GUN
 table S2C_USER_NOT_FOUND
 {
   message: string;
+}
+
+table S2C_USER_DISCONNECT
+{
+  nickname: string;
 }

@@ -134,3 +134,17 @@ inline auto WRITE_PU_S2C_USER_NOT_FOUND(int32 &refLength)
 	builder.Clear();
 	return data;
 }
+
+inline auto WRITE_PU_S2C_USER_DISCONNECT(int32 &refLength, string nickname)
+{
+	auto nickName = builder.CreateString(nickname);
+	auto makePacket = CreateS2C_USER_DISCONNECT(builder, nickName);
+	auto packet = CreateMessage(builder, MESSAGE_ID::MESSAGE_ID_S2C_USER_DISCONNECT, makePacket.Union());
+
+	builder.Finish(packet);
+	refLength = builder.GetSize();
+
+	auto data = builder.GetBufferPointer();
+	builder.Clear();
+	return data;
+}
