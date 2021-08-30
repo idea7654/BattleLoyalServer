@@ -8,6 +8,7 @@
 
 SocketWorker::SocketWorker()
 {
+
 }
 
 
@@ -77,14 +78,6 @@ RETRY:
 	int32 PacketLength = 0;
 	::memcpy(&PacketLength, mReadBuffer + NextPacket, sizeof(int32));
 
-	//shared_ptr<Session> target = this->FindSession(remoteAddress, remotePort);
-	//if (PacketLength == 8888)
-	//{
-	//	ResetSessionTime(target);
-	//} //USE this or C2S_EXTEND_SESSION Packet
-
-	//Ack 9999 -> Reliable
-
 	int32 PacketNumber = 0;
 	::memcpy(&PacketNumber, mReadBuffer + sizeof(int32) + NextPacket, sizeof(int32));
 
@@ -92,8 +85,30 @@ RETRY:
 	//WARN! 나중에 보낸 패킷이 먼저오면 전에꺼 보낸 패킷 무시해버림.
 	//따라서 해당 기능에 영향을 많이 받는다면 TCP를 사용하거나 로직을 바꿔야함
 	//This for only Check SamePacket...
-	//if (!CheckPacketNum(target, PacketNumber) && (remainLength <= PacketLength))
+	//shared_ptr<Session> target = this->FindSession(remoteAddress, remotePort);
+
+	//if (remainLength <= PacketLength)
 	//	return;
+
+	/*if (target)
+	{
+		if (!CheckPacketNum(target, PacketNumber))
+			return;
+	}*/
+	cout << "한번 실행!" << endl;
+	if (PacketLength == 8888)
+	{
+		//Reliable UDP
+		//int32 packetData = 8888;
+		//BYTE bytes[sizeof packetData];
+		//std::copy(static_cast<const char*>(static_cast<const void*>(&packetData)),
+		//	static_cast<const char*>(static_cast<const void*>(&packetData)) + sizeof packetData,
+		//	bytes);
+		//WriteTo(remoteAddress, remotePort, bytes, packetData);
+		cout << "Reliable 왔음" << endl;
+		SetEvent(mReliableHandle);
+		return;
+	}
 
 	char packet[MAX_BUFFER_LENGTH];
 	::memcpy(&packet, mReadBuffer + sizeof(int32) * 2 + NextPacket, PacketLength);
@@ -160,13 +175,31 @@ RETRY:
 			if (overLogin)
 			{
 				//LOGIN_ERROR->중복로그인 처리
-				
 			}
 			int32 dataLength = 0;
 			auto packetData = WRITE_PU_S2C_COMPLETE_LOGIN(returnData, dataLength);
+			while (mReliableHandle)
+			{
+
+			}
+			mLock.EnterWriteLock();
+			mReliableHandle = CreateEvent(0, false, false, NULL);
+			mLock.LeaveWriteLock();
+			uint16 DisconnectCount = 0;
+RELIABLE:
 			WriteTo(remoteAddress, remotePort, packetData, dataLength);
-			//char nick[20];
-			//memcpy(nick, returnData, sizeof(returnData));
+			DWORD EventID = WaitForSingleObject(mReliableHandle, 500);
+			DisconnectCount++;
+			cout << "한번 기다림" << endl;
+			if (EventID != WAIT_OBJECT_0)
+			{
+				if (DisconnectCount < 10)
+					goto RELIABLE;
+				else
+					cout << "INVALID USER" << endl;
+					//처리..
+			}
+			CloseHandle(mReliableHandle);
 			string nick = returnData;
 			auto user = MakeShared<Session>();
 			user->isOnline = 10;
@@ -178,7 +211,6 @@ RETRY:
 			mUserSession.emplace_back(user);
 			mLock.LeaveWriteLock();
 		}
-		//mLock.LeaveWriteLock();
 		break;
 	}
 	case MESSAGE_ID::MESSAGE_ID_C2S_REQUEST_REGISTER:
@@ -305,9 +337,9 @@ void SocketWorker::WriteEvent()
 	mLock.LeaveWriteLock();
 }
 
-bool SocketWorker::CheckPacketNum(Session &session, uint32 PacketNumber)
+bool SocketWorker::CheckPacketNum(shared_ptr<Session> &session, uint32 PacketNumber)
 {
-	return session.PacketNum >= PacketNumber ? false : true;
+	return session->PacketNum >= PacketNumber ? false : true;
 }
 
 void SocketWorker::ReduceSessionTime() //Reduce SessionTime which in SessionVector, Use with Thread
@@ -346,6 +378,16 @@ shared_ptr<Session> SocketWorker::FindSession(string nickname)
 			return i;
 	}
 	return nullptr;
+}
+
+shared_ptr<Session> SocketWorker::FindSession(char * remoteAddress, uint16 port)
+{
+	for (auto &i : mUserSession)
+	{
+		if (i->remoteAddress == remoteAddress && i->port == port)
+			return i;
+	}
+	//return shared_ptr<Session>();
 }
 
 auto SocketWorker::FindContentSession(int32 RoomNum)

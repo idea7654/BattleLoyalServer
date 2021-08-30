@@ -37,11 +37,12 @@ public:
 	void						ReadEvent();
 	void						WriteEvent();
 	void						ThreadManage();
-	bool						CheckPacketNum(Session &session, uint32 PacketNumber);
+	bool						CheckPacketNum(shared_ptr<Session> &session, uint32 PacketNumber);
 
 	void						ReduceSessionTime();
 	bool						ResetSessionTime(shared_ptr<Session> &session);
 	shared_ptr<Session>			FindSession(string nickname);
+	shared_ptr<Session>			FindSession(char* remoteAddress, uint16 port);
 	auto						FindContentSession(int32 RoomNum);
 	shared_ptr<ContentSession>	FindContentSession(string nickname);
 	ContentSessions				FindContentSessionInVec(int32 RoomNum);
@@ -56,9 +57,10 @@ private:
 	vector<shared_ptr<ContentSession>>		mContentSession;
 	vector<ContentSessions>					mContentSessionVec;
 	vector<Position>						mInitPos;
-	uint16									ROOM_MAX_NUM = 2;
+	uint16									ROOM_MAX_NUM = 1;
 	uint16									GUN_MAX_NUM = 1;
 	uint16									ROOM_NUM = 0;
 	uint16									SESSION_REDUCE_TIME = 1000;
+	HANDLE									mReliableHandle;
 };
 
