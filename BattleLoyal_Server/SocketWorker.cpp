@@ -95,7 +95,7 @@ RETRY:
 		if (!CheckPacketNum(target, PacketNumber))
 			return;
 	}*/
-	cout << "한번 실행!" << endl;
+	
 	if (PacketLength == 8888)
 	{
 		//Reliable UDP
@@ -105,7 +105,6 @@ RETRY:
 		//	static_cast<const char*>(static_cast<const void*>(&packetData)) + sizeof packetData,
 		//	bytes);
 		//WriteTo(remoteAddress, remotePort, bytes, packetData);
-		cout << "Reliable 왔음" << endl;
 		SetEvent(mReliableHandle);
 		return;
 	}
@@ -185,21 +184,11 @@ RETRY:
 			mLock.EnterWriteLock();
 			mReliableHandle = CreateEvent(0, false, false, NULL);
 			mLock.LeaveWriteLock();
-			uint16 DisconnectCount = 0;
-RELIABLE:
-			WriteTo(remoteAddress, remotePort, packetData, dataLength);
-			DWORD EventID = WaitForSingleObject(mReliableHandle, 500);
-			DisconnectCount++;
-			cout << "한번 기다림" << endl;
-			if (EventID != WAIT_OBJECT_0)
-			{
-				if (DisconnectCount < 10)
-					goto RELIABLE;
-				else
-					cout << "INVALID USER" << endl;
-					//처리..
-			}
-			CloseHandle(mReliableHandle);
+
+			//
+			ReliableProcess(remoteAddress, remotePort, packetData, dataLength);
+			
+			//
 			string nick = returnData;
 			auto user = MakeShared<Session>();
 			user->isOnline = 10;
@@ -428,7 +417,8 @@ void SocketWorker::GameStart()
 	{
 		int32 packetLength = 0;
 		auto packet = WRITE_PU_S2C_GAME_START(packetLength, RoomUsers, i->pos, GunInfo);
-		WriteTo(i->remoteAddress, i->port, packet, packetLength);
+		//WriteTo(i->remoteAddress, i->port, packet, packetLength);
+		ReliableProcess(i->remoteAddress, i->port, packet, packetLength);
 	}
 }
 
@@ -485,4 +475,23 @@ void SocketWorker::SessionOut(vector<shared_ptr<Session>>& Session)
 		}
 	}
 	mLock.LeaveWriteLock();
+}
+
+void SocketWorker::ReliableProcess(char* remoteAddress, uint16 &remotePort, BYTE *data, DWORD dataLength)
+{
+	uint16 DisconnectCount = 0;
+RELIABLE:
+	WriteTo(remoteAddress, remotePort, data, dataLength);
+	DWORD EventID = WaitForSingleObject(mReliableHandle, 500);
+	DisconnectCount++;
+	if (EventID != WAIT_OBJECT_0)
+	{
+		if (DisconnectCount < 10)
+			goto RELIABLE;
+		else
+			cout << "INVALID USER" << endl;
+		//처리..
+	}
+	CloseHandle(mReliableHandle);
+	mReliableHandle = NULL;
 }

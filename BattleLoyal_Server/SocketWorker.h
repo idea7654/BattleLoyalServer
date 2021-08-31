@@ -51,13 +51,14 @@ public:
 	vector<SessionGun>			SetGunPosition();
 	void						UserNotFound(char* remoteAddress, uint16 port);
 	void						SessionOut(vector<shared_ptr<Session>> &Session);
+	void						ReliableProcess(char* remoteAddress, uint16 &remotePort, BYTE *data, DWORD dataLength);
 private:
 	vector<thread>							mThreadPool;
 	vector<shared_ptr<Session>>				mUserSession;
 	vector<shared_ptr<ContentSession>>		mContentSession;
 	vector<ContentSessions>					mContentSessionVec;
 	vector<Position>						mInitPos;
-	uint16									ROOM_MAX_NUM = 1;
+	uint16									ROOM_MAX_NUM = 2;
 	uint16									GUN_MAX_NUM = 1;
 	uint16									ROOM_NUM = 0;
 	uint16									SESSION_REDUCE_TIME = 1000;
