@@ -244,13 +244,16 @@ RETRY:
 		contentSession->nickname = originSession->nickname;
 		contentSession->isOnline = originSession->isOnline;
 		mContentSession.push_back(contentSession);
+		mLock.LeaveWriteLock();
 		if (mContentSession.size() == ROOM_MAX_NUM)
 		{
 			GameStart();
+			mLock.EnterWriteLock();
 			mContentSessionVec.push_back(ContentSessions{mContentSession, ROOM_NUM - 1});
 			mContentSession.clear();
+			mLock.LeaveWriteLock();
 		}
-		mLock.LeaveWriteLock();
+		
 		break;
 	}
 	case MESSAGE_ID::MESSAGE_ID_C2S_CANCEL_MATCHING:
@@ -321,6 +324,7 @@ void SocketWorker::WriteEvent()
 	mClientInfo.sin_port = htons(remotePort);
 
 	int32 returnVal = sendto(mSocket, mWriteBuffer, dataLength, 0, (SOCKADDR*)&mClientInfo, sizeof(mClientInfo));
+
 	if (returnVal < 0)
 		return;
 	mLock.LeaveWriteLock();
@@ -408,6 +412,9 @@ SocketWorker::ContentSessions SocketWorker::FindContentSessionInVec(int32 RoomNu
 
 void SocketWorker::GameStart()
 {
+	//Lock불필요->동시에 게임이 잡히는 경우 극히 드물것..
+	//필요할 경우 추후 write-read섞어서 구현하면됨
+
 	int32 OriginRoomNum = ROOM_NUM;
 	ROOM_NUM++;
 	auto RoomUsers = FindContentSession(OriginRoomNum);
@@ -418,6 +425,7 @@ void SocketWorker::GameStart()
 		int32 packetLength = 0;
 		auto packet = WRITE_PU_S2C_GAME_START(packetLength, RoomUsers, i->pos, GunInfo);
 		//WriteTo(i->remoteAddress, i->port, packet, packetLength);
+		mReliableHandle = CreateEvent(0, false, false, NULL);
 		ReliableProcess(i->remoteAddress, i->port, packet, packetLength);
 	}
 }
@@ -481,7 +489,7 @@ void SocketWorker::ReliableProcess(char* remoteAddress, uint16 &remotePort, BYTE
 {
 	uint16 DisconnectCount = 0;
 RELIABLE:
-	WriteTo(remoteAddress, remotePort, data, dataLength);
+	bool IsSucces = WriteTo(remoteAddress, remotePort, data, dataLength);
 	DWORD EventID = WaitForSingleObject(mReliableHandle, 500);
 	DisconnectCount++;
 	if (EventID != WAIT_OBJECT_0)
