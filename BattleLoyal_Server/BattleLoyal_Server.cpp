@@ -34,7 +34,7 @@ int main()
 	thread t1(&SocketWorker::Init, socketWorker);
 	//컨텐츠만 넣으면 작동
 	thread t2(&SocketWorker::ReduceSessionTime, socketWorker);
-	
+
 	t1.join();
 	t2.join();
 	if (!socketWorker->End())

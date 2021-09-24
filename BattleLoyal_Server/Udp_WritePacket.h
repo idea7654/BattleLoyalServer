@@ -16,6 +16,7 @@ inline auto WRITE_PU_S2C_MOVE(string nickname, Position &pos, float dir, int32 m
 	refLength = builder.GetSize();
 
 	builder.Clear();
+
 	return data;
 }
 

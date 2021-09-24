@@ -14,6 +14,7 @@ SocketWorker::SocketWorker()
 
 SocketWorker::~SocketWorker()
 {
+
 }
 
 void SocketWorker::Init()
@@ -24,6 +25,7 @@ void SocketWorker::Init()
 	//Define Init Position
 	mInitPos.push_back(Position{ 6.0f, -1.45f, 2.0f });
 	mInitPos.push_back(Position{ -6.0f, -1.45f, -2.0f });
+	//mInitPos.push_back(Position{});
 
 	for (int32 i = 0; i < 8; i++) //8 WorkerThreads
 	{
@@ -95,7 +97,6 @@ RETRY:
 		if (!CheckPacketNum(target, PacketNumber))
 			return;
 	}*/
-	
 	if (PacketLength == 8888)
 	{
 		//Reliable UDP
@@ -158,9 +159,9 @@ RETRY:
 	case MESSAGE_ID::MESSAGE_ID_C2S_REQUEST_LOGIN:
 	{
 		auto RecvData = static_cast<const C2S_REQUEST_LOGIN*>(message->packet());
-
 		//mLock.EnterWriteLock();
 		auto returnData = READ_PU_C2S_REQUEST_LOGIN(RecvData);
+		
 		if (returnData == "Incorrect_Email")
 		{
 			int32 errLength = 0;
@@ -177,18 +178,19 @@ RETRY:
 			}
 			int32 dataLength = 0;
 			auto packetData = WRITE_PU_S2C_COMPLETE_LOGIN(returnData, dataLength);
-			while (mReliableHandle)
-			{
+			//while (mReliableHandle)
+			//{
 
-			}
+			//}
 			mLock.EnterWriteLock();
 			mReliableHandle = CreateEvent(0, false, false, NULL);
 			mLock.LeaveWriteLock();
 
 			//
-			ReliableProcess(remoteAddress, remotePort, packetData, dataLength);
-			
-			//
+			//ReliableProcess(remoteAddress, remotePort, packetData, dataLength);
+			//cout << "ÆÐÅ¶ º¸³¿!" << endl;
+			WriteTo(remoteAddress, remotePort, packetData, dataLength);
+				
 			string nick = returnData;
 			auto user = MakeShared<Session>();
 			user->isOnline = 10;
@@ -490,6 +492,7 @@ void SocketWorker::ReliableProcess(char* remoteAddress, uint16 &remotePort, BYTE
 	uint16 DisconnectCount = 0;
 RELIABLE:
 	bool IsSucces = WriteTo(remoteAddress, remotePort, data, dataLength);
+	cout << IsSucces << endl;
 	DWORD EventID = WaitForSingleObject(mReliableHandle, 500);
 	DisconnectCount++;
 	if (EventID != WAIT_OBJECT_0)

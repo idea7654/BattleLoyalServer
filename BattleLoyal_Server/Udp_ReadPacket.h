@@ -27,7 +27,6 @@ inline auto READ_PU_C2S_REQUEST_LOGIN(const C2S_REQUEST_LOGIN* packet)
 	bool isSuccess = false;
 	string email = packet->email()->c_str();
 	string password = packet->password()->c_str();
-	
 	string Query = "SELECT * FROM users WHERE email='" + email + "';";
 	auto result = DBManager.SQL_QUERY((char*)Query.c_str(), isSuccess);
 
