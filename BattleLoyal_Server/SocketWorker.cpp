@@ -23,8 +23,8 @@ void SocketWorker::Init()
 	mWriteEvent = CreateEvent(0, false, false, NULL);
 	DBManager.SQL_INIT();
 	//Define Init Position
-	mInitPos.push_back(Position{ 6.0f, -1.45f, 2.0f });
-	mInitPos.push_back(Position{ -6.0f, -1.45f, -2.0f });
+	mInitPos.push_back(Position{ 4527.06543f, -26278.300781f, 299.38736f });
+	mInitPos.push_back(Position{ -816.959778f, -27386.173828f, 288.368652f });
 	//mInitPos.push_back(Position{});
 
 	for (int32 i = 0; i < 8; i++) //8 WorkerThreads
@@ -67,6 +67,7 @@ void SocketWorker::ReadEvent()
 {
 	//mReadQueue
 	mLock.EnterWriteLock();
+
 	DWORD dataLength = 0;
 	char remoteAddress[32] = { 0 };
 	uint16 remotePort = 0;
@@ -123,12 +124,20 @@ RETRY:
 		auto RecvData = static_cast<const C2S_MOVE*>(message->packet());
 		string nickname;
 		Position userPos;
-		float userDir;
-		int32 moveDir;
-		READ_PU_C2S_MOVE(RecvData, nickname, userPos, userDir, moveDir);
+		Direction userDir;
+		float vfront = 0.0f;
+		float vright = 0.0f;
+		float vyaw = 0.0f;
+		bool isJump = false;
+		bool isCrouch = false;
+		mLock.EnterWriteLock();
+		READ_PU_C2S_MOVE(RecvData, nickname, userPos, userDir, vfront, vright, vyaw, isJump, isCrouch);
+		mLock.LeaveWriteLock();
 
 		int32 size = 0;
-		auto data = WRITE_PU_S2C_MOVE(nickname, userPos, userDir, moveDir, size);
+		mLock.EnterWriteLock();
+		auto data = WRITE_PU_S2C_MOVE(nickname, userPos, userDir, vfront, vright, vyaw, isJump, isCrouch, size);
+		mLock.LeaveWriteLock();
 		//WriteTo(remoteAddress, remotePort, data, size);
 		//여기서 방을 찾고...broadCasting
 		if (FindSession(nickname) == nullptr)
@@ -141,7 +150,7 @@ RETRY:
 			ContentSessions roomUsers = FindContentSessionInVec(userRoomNum);
 			for (auto &i : roomUsers.Sessions)
 			{
-				WriteTo(i->remoteAddress, i->port, data, size);
+				bool a = WriteTo(i->remoteAddress, i->port, data, size);
 			}
 		}
 		break;
@@ -230,9 +239,13 @@ RETRY:
 	{
 		auto RecvData = static_cast<const C2S_START_MATCHING*>(message->packet());
 
-		mLock.EnterWriteLock();
+		//mLock.EnterWriteLock();
 		auto nickname = READ_PU_C2S_START_MATCHING(RecvData);
+
+		mLock.EnterReadLock();
 		auto originSession = FindSession(nickname);
+		mLock.LeaveReadLock();
+
 		if (originSession == nullptr)
 		{
 			UserNotFound(remoteAddress, remotePort);
@@ -245,8 +258,11 @@ RETRY:
 		contentSession->RoomNum = ROOM_NUM;
 		contentSession->nickname = originSession->nickname;
 		contentSession->isOnline = originSession->isOnline;
+		
+		mLock.EnterWriteLock();
 		mContentSession.push_back(contentSession);
 		mLock.LeaveWriteLock();
+
 		if (mContentSession.size() == ROOM_MAX_NUM)
 		{
 			GameStart();
@@ -255,7 +271,6 @@ RETRY:
 			mContentSession.clear();
 			mLock.LeaveWriteLock();
 		}
-		
 		break;
 	}
 	case MESSAGE_ID::MESSAGE_ID_C2S_CANCEL_MATCHING:
@@ -291,6 +306,7 @@ RETRY:
 		}
 		auto userRoom = FindContentSessionInVec(userSession->RoomNum);
 		auto packet = WRITE_PU_S2C_PICKUP_GUN(packetLen, nickname, gunNum);
+
 		for (auto &i : userRoom.Sessions)
 		{
 			WriteTo(i->remoteAddress, i->port, packet, packetLen);
@@ -447,7 +463,7 @@ vector<SessionGun> SocketWorker::SetGunPosition()
 	vector<SessionGun> sessionGun;
 	for (int32 i = 0; i < GUN_MAX_NUM; i++)
 	{
-		auto a = Position{ 5.95f, -1.54f, -5.21f };
+		auto a = Position{ 270.0f, -28390.0f, 180.0f };
 		sessionGun.emplace_back(SessionGun{ a, Gun::NORMAL });
 	}
 	return sessionGun;
@@ -483,6 +499,7 @@ void SocketWorker::SessionOut(vector<shared_ptr<Session>>& Session)
 				break;
 			}
 		}
+		i = nullptr;
 	}
 	mLock.LeaveWriteLock();
 }
@@ -492,8 +509,9 @@ void SocketWorker::ReliableProcess(char* remoteAddress, uint16 &remotePort, BYTE
 	uint16 DisconnectCount = 0;
 RELIABLE:
 	bool IsSucces = WriteTo(remoteAddress, remotePort, data, dataLength);
-	cout << IsSucces << endl;
+
 	DWORD EventID = WaitForSingleObject(mReliableHandle, 500);
+
 	DisconnectCount++;
 	if (EventID != WAIT_OBJECT_0)
 	{

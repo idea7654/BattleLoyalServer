@@ -1,12 +1,13 @@
 #pragma once
 #include "Database.h"
-inline auto READ_PU_C2S_MOVE(const C2S_MOVE *packet, string &userName, Position &userPos, float &userDir, int32 &moveDir)
+inline auto READ_PU_C2S_MOVE(const C2S_MOVE *packet, string &userName, Position &userPos, Direction &userDir, float &vfront, float &vright, float &vyaw, bool &isJump, bool &isCrouch)
 {
 	userName = packet->nick_name()->c_str();
-	//userPos = Position{ packet->pos()->x, packet->pos()->y, packet->pos()->z };
 	userPos = Position{ packet->pos()->x(), packet->pos()->y(), packet->pos()->z() };
-	userDir = packet->dir();
-	moveDir = packet->movedir();
+	userDir = Direction{ packet->dir()->x(), packet->dir()->y(), packet->dir()->z() };
+	vfront = packet->vfront();
+	vright = packet->vright();
+	vyaw = packet->vyaw();
 }
 
 inline auto READ_PU_C2S_EXTEND_SESSION(const C2S_EXTEND_SESSION* packet, vector<shared_ptr<Session>> &sessions)
