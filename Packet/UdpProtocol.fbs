@@ -2,6 +2,7 @@ union MESSAGE_ID
 {
   S2C_MOVE,
   S2C_SHOOT,
+  C2S_SHOOT,
   C2S_MOVE,
   C2S_EXTEND_SESSION,
   C2S_REQUEST_LOGIN,
@@ -16,7 +17,21 @@ union MESSAGE_ID
   C2S_PICKUP_GUN,
   S2C_PICKUP_GUN,
   S2C_USER_NOT_FOUND,
-  S2C_USER_DISCONNECT
+  S2C_USER_DISCONNECT,
+  S2C_PLAYER_DIE,
+  S2C_USER_VICTORY,
+  C2S_MELEE_ATTACK,
+  S2C_MELEE_ATTACK,
+  C2S_EQUIP_GUN,
+  S2C_EQUIP_GUN,
+  C2S_CHANGE_GUN,
+  S2C_CHANGE_GUN,
+  S2C_START_ROUND,
+  C2S_SET_USER_POSITION,
+  S2C_SET_USER_POSITION,
+  S2C_START_SIGN,
+  C2S_ZONE_DAMAGE,
+  S2C_ZONE_DAMAGE
 }
 
 struct Vec3{
@@ -46,9 +61,16 @@ table S2C_MOVE
 
 table S2C_SHOOT
 {
-  nick_name:string;
-  pos: Vec3;
-  dir: Vec3;
+  nickname: string;
+  target: string;
+  damage: float;
+}
+
+table C2S_SHOOT
+{
+  nickname: string;
+  target: string;
+  damage: float;
 }
 
 table C2S_MOVE
@@ -119,10 +141,17 @@ table InitGunInfo
   pos: Vec3;
 }
 
+table RoundInfo
+{
+  round: int;
+  pos: Vec3;
+}
+
 table S2C_GAME_START
 {
   userdata: [InitUserInfo];
   gundata: [InitGunInfo];
+  rounddata: [RoundInfo];
 }
 
 table C2S_CANCEL_MATCHING
@@ -150,4 +179,92 @@ table S2C_USER_NOT_FOUND
 table S2C_USER_DISCONNECT
 {
   nickname: string;
+}
+
+table S2C_PLAYER_DIE
+{
+  nickname: string;
+  target: string;
+  type: string;
+  combo: int;
+}
+
+table S2C_USER_VICTORY
+{
+  nickname: string;
+}
+
+table C2S_MELEE_ATTACK
+{
+  nickname: string;
+  target: string;
+  combo: int;
+}
+
+table S2C_MELEE_ATTACK
+{
+  nickname: string;
+  target: string;
+  damage: float;
+  combo: int;
+}
+
+table C2S_EQUIP_GUN
+{
+  nickname: string;
+  state: bool;
+}
+
+table S2C_EQUIP_GUN
+{
+  nickname: string;
+  state: bool;
+}
+
+table C2S_CHANGE_GUN
+{
+  nickname: string;
+  originid: int;
+  nowid: int;
+}
+
+table S2C_CHANGE_GUN
+{
+  nickname: string;
+  originid: int;
+  nowid: int;
+}
+
+table S2C_START_ROUND
+{
+  round: int;
+}
+
+table C2S_SET_USER_POSITION
+{
+  nickname: string;
+  sector: int;
+}
+
+table S2C_SET_USER_POSITION
+{
+  nickname: string;
+  sector: int;
+}
+
+table S2C_START_SIGN
+{
+  userdata: [InitUserInfo];
+}
+
+table C2S_ZONE_DAMAGE
+{
+  nickname: string;
+  damage: int;
+}
+
+table S2C_ZONE_DAMAGE
+{
+  nickname: string;
+  damage: int;
 }

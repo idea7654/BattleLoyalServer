@@ -2,7 +2,9 @@
 #include "SocketWorker.h"
 #include "../Packet/UdpProtocol_generated.h"
 #include "Udp_ReadPacket.h"
+#include <random>
 #include "Udp_WritePacket.h"
+#include <future>
 
 #pragma warning(disable:4996)
 
@@ -23,9 +25,13 @@ void SocketWorker::Init()
 	mWriteEvent = CreateEvent(0, false, false, NULL);
 	DBManager.SQL_INIT();
 	//Define Init Position
-	mInitPos.push_back(Position{ 4527.06543f, -26278.300781f, 299.38736f });
-	mInitPos.push_back(Position{ -816.959778f, -27386.173828f, 288.368652f });
-	//mInitPos.push_back(Position{});
+	mInitPos.push_back(Position{ 17017.322266f, -17165.876953f, 176.05896f }); //Sector1
+	mInitPos.push_back(Position{ 4458.508789f, 20358.816406f, 168.702896f }); //Sector2
+	mInitPos.push_back(Position{ -21984.056641f, -11971.955078f, 294.17807f }); //Sector3
+	
+	GunPos.push_back(Position{ 270.0f, -28390.0f, 180.0f });
+	GunPos.push_back(Position{ 53.0f, -26309.0f, 185.0f });
+	GunPos.push_back(Position{ -20293.199219f, -12244.154297f , 360.351746f });
 
 	for (int32 i = 0; i < 8; i++) //8 WorkerThreads
 	{
@@ -112,8 +118,9 @@ RETRY:
 	}
 
 	char packet[MAX_BUFFER_LENGTH];
+	if (PacketLength < 0) return;
 	::memcpy(&packet, mReadBuffer + sizeof(int32) * 2 + NextPacket, PacketLength);
-
+	//여기 에러 고치자
 	auto message = GetMessage(packet);
 	auto protocol = message->packet_type();
 
@@ -251,13 +258,15 @@ RETRY:
 			UserNotFound(remoteAddress, remotePort);
 			break;
 		}
+		originSession->RoomNum = ROOM_NUM;
 		auto contentSession = MakeShared<ContentSession>();
 		contentSession->PacketNum = originSession->PacketNum;
 		contentSession->remoteAddress = originSession->remoteAddress;
 		contentSession->port = originSession->port;
-		contentSession->RoomNum = ROOM_NUM;
+		contentSession->RoomNum = originSession->RoomNum;
 		contentSession->nickname = originSession->nickname;
 		contentSession->isOnline = originSession->isOnline;
+		contentSession->hp = 100.0f;
 		
 		mLock.EnterWriteLock();
 		mContentSession.push_back(contentSession);
@@ -265,11 +274,47 @@ RETRY:
 
 		if (mContentSession.size() == ROOM_MAX_NUM)
 		{
-			GameStart();
 			mLock.EnterWriteLock();
-			mContentSessionVec.push_back(ContentSessions{mContentSession, ROOM_NUM - 1});
-			mContentSession.clear();
+			vector<shared_ptr<SessionGun>> GunInfo;
+			for (int32 i = 0; i < GunPos.size(); i++)
+			{
+				auto newSession = MakeShared<SessionGun>();
+				newSession->Gun_pos = GunPos[i];
+				newSession->Gun_Type = Gun::NORMAL;
+				newSession->gunNum = i;
+				GunInfo.push_back(newSession);
+			}
 			mLock.LeaveWriteLock();
+			GameStart(GunInfo);
+			mLock.EnterWriteLock();
+			mContentSessionVec.push_back(ContentSessions{mContentSession, GunInfo, ROOM_NUM - 1 });
+			mContentSession.clear();
+			int32 MyRoomNum = ROOM_NUM - 1;
+			mLock.LeaveWriteLock();
+			
+			future<void> future = async(std::launch::async, [this, &MyRoomNum]() {
+				Sleep(35000);
+				int32 packetLength = 0;
+				ContentSessions RoomUsersLamb = FindContentSessionInVec(MyRoomNum);
+				uint8_t* packet = WRITE_PU_S2C_START_SIGN(packetLength, RoomUsersLamb.Sessions);
+				for (auto &i : RoomUsersLamb.Sessions)
+				{
+					WriteTo(i->remoteAddress, i->port, packet, packetLength);
+				}
+
+				Sleep(20000);
+				packet = WRITE_PU_S2C_ROUND_START(packetLength, 1);
+				for (auto &i : RoomUsersLamb.Sessions)
+				{
+					WriteTo(i->remoteAddress, i->port, packet, packetLength);
+				}
+				Sleep(180000);
+				packet = WRITE_PU_S2C_ROUND_START(packetLength, 2);
+				for (auto &i : RoomUsersLamb.Sessions)
+				{
+					WriteTo(i->remoteAddress, i->port, packet, packetLength);
+				}
+			});
 		}
 		break;
 	}
@@ -304,8 +349,205 @@ RETRY:
 			UserNotFound(remoteAddress, remotePort);
 			break;
 		}
+		
 		auto userRoom = FindContentSessionInVec(userSession->RoomNum);
+		auto user = FindContetnSessionInVecByName(userSession->RoomNum, nickname);
+
+		bool GunValid = GunCheck(userRoom, gunNum);
+
+		if (!GunValid)
+			break;
+		
+		if (user != nullptr)
+			user->gun = userRoom.Guns[gunNum];
+		else
+			break;
+
 		auto packet = WRITE_PU_S2C_PICKUP_GUN(packetLen, nickname, gunNum);
+		mLock.LeaveWriteLock();
+
+		for (auto &i : userRoom.Sessions)
+		{
+			WriteTo(i->remoteAddress, i->port, packet, packetLen);
+		}
+		
+		break;
+	}
+	case MESSAGE_ID::MESSAGE_ID_C2S_SHOOT:
+	{
+		auto RecvData = static_cast<const C2S_SHOOT*>(message->packet());
+		int32 packetLen = 0;
+		int32 packetLength = 0;
+		string nickname;
+		string target;
+		float damage = 0.0f;
+
+		mLock.EnterWriteLock();
+		READ_PU_C2S_SHOOT(RecvData, nickname, target, damage);
+
+		auto userSession = FindSession(nickname);
+
+		if (userSession == nullptr)
+		{
+			UserNotFound(remoteAddress, remotePort);
+			break;
+		}
+
+		auto userRoom = FindContentSessionInVec(userSession->RoomNum);
+		auto packet = WRITE_PU_S2C_SHOOT(packetLen, nickname, target, damage);
+
+		if (damage != 0.0f)
+		{
+			for (auto &i : userRoom.Sessions)
+			{
+				if (i->nickname == target)
+				{
+					i->hp -= damage;
+					if (i->hp <= 0)
+					{
+						auto diePacket = WRITE_PU_S2C_PLAYER_DIE(packetLength, nickname, target, "SHOOT");
+						for (auto &i : userRoom.Sessions)
+						{
+							WriteTo(i->remoteAddress, i->port, diePacket, packetLength);
+						}
+					}
+					else {
+						for (auto &i : userRoom.Sessions)
+						{
+							WriteTo(i->remoteAddress, i->port, packet, packetLen);
+						}
+					}
+					//Sleep(300);
+					//CheckUserDie(userRoom, nickname);
+					break;
+				}
+			}
+		}
+		else {
+			for (auto &i : userRoom.Sessions)
+			{
+				WriteTo(i->remoteAddress, i->port, packet, packetLen);
+			}
+		}
+		mLock.LeaveWriteLock();
+		break;
+	}
+	case MESSAGE_ID::MESSAGE_ID_C2S_MELEE_ATTACK:
+	{
+		auto RecvData = static_cast<const C2S_MELEE_ATTACK*>(message->packet());
+		string nickname;
+		string target;
+		int32 combo = 0;
+		int32 packetLen = 0;
+		int32 packetLength = 0;
+		mLock.EnterWriteLock();
+		READ_PU_C2S_MELEE_ATTACK(RecvData, nickname, target, combo);
+		float damage;
+		if (target == "")
+			damage = 0.0f;
+		else
+			damage = (float)combo * 10.0f;
+
+		auto userSession = FindSession(nickname);
+		if (userSession == nullptr)
+		{
+			UserNotFound(remoteAddress, remotePort);
+			break;
+		}
+
+		auto userRoom = FindContentSessionInVec(userSession->RoomNum);
+		auto packet = WRITE_PU_S2C_MELEE_ATTACK(packetLen, nickname, target, damage, combo);
+
+		if (target == "")
+		{
+			for (auto &i : userRoom.Sessions)
+			{
+				WriteTo(i->remoteAddress, i->port, packet, packetLen);
+			}
+		}
+		else {
+			for (auto &i : userRoom.Sessions)
+			{
+				if (i->nickname == target)
+				{
+					i->hp -= damage;
+					if (i->hp <= 0)
+					{
+						auto diePacket = WRITE_PU_S2C_PLAYER_DIE(packetLength, nickname, target, "MELEE", combo);
+						for (auto &i : userRoom.Sessions)
+						{
+							WriteTo(i->remoteAddress, i->port, diePacket, packetLength);
+						}
+					}
+					else {
+						for (auto &i : userRoom.Sessions)
+						{
+							WriteTo(i->remoteAddress, i->port, packet, packetLen);
+						}
+					}
+					break;
+				}
+			}
+		}
+		mLock.LeaveWriteLock();
+		Sleep(600);
+		CheckUserDie(userRoom, nickname);
+		break;
+	}
+
+	case MESSAGE_ID::MESSAGE_ID_C2S_EQUIP_GUN:
+	{
+		auto RecvData = static_cast<const C2S_EQUIP_GUN*>(message->packet());
+		string nickname;
+		bool state = false;
+		int32 packetLen = 0;
+		mLock.EnterWriteLock();
+		READ_PU_C2S_EQUIP_GUN(RecvData, nickname, state);
+
+		auto userSession = FindSession(nickname);
+		if (userSession == nullptr)
+		{
+			UserNotFound(remoteAddress, remotePort);
+			break;
+		}
+
+		auto userRoom = FindContentSessionInVec(userSession->RoomNum);
+		auto packet = WRITE_PU_S2C_EQUIP_GUN(packetLen, nickname, state);
+
+		for (auto &i : userRoom.Sessions)
+		{
+			WriteTo(i->remoteAddress, i->port, packet, packetLen);
+		}
+		mLock.LeaveWriteLock();
+
+		break; 
+	}
+
+	case MESSAGE_ID::MESSAGE_ID_C2S_CHANGE_GUN:
+	{
+		auto RecvData = static_cast<const C2S_CHANGE_GUN*>(message->packet());
+		string nickname;
+		int32 originID = 0;
+		int32 nowID = 0;
+		int32 packetLen = 0;
+		mLock.EnterWriteLock();
+		READ_PU_C2S_CHANGE_GUN(RecvData, nickname, originID, nowID);
+
+		auto userSession = FindSession(nickname);
+		if (userSession == nullptr)
+		{
+			UserNotFound(remoteAddress, remotePort);
+			break;
+		}
+		auto userRoom = FindContentSessionInVec(userSession->RoomNum);
+		auto user = FindContetnSessionInVecByName(userSession->RoomNum, nickname);
+		bool GunValid = GunCheck(userRoom, nowID);
+		if (!GunValid)
+			break;
+		user->gun = userRoom.Guns[nowID];
+		userRoom.Guns[originID]->Gun_pos = userRoom.Guns[nowID]->Gun_pos;
+
+		auto packet = WRITE_PU_S2C_CHANGE_GUN(packetLen, nickname, originID, nowID);
 
 		for (auto &i : userRoom.Sessions)
 		{
@@ -314,7 +556,33 @@ RETRY:
 		mLock.LeaveWriteLock();
 		break;
 	}
+	case MESSAGE_ID::MESSAGE_ID_C2S_SET_USER_POSITION:
+	{
+		auto RecvData = static_cast<const C2S_SET_USER_POSITION*>(message->packet());
+		string nickname;
+		int32 sector = 0;
+		mLock.EnterWriteLock();
+		READ_PU_C2S_SET_USER_POSITION(RecvData, nickname, sector);
+		auto userSession = FindSession(nickname);
+		if (userSession == nullptr)
+		{
+			UserNotFound(remoteAddress, remotePort);
+			break;
+		}
+		
+		auto userRoom = FindContentSessionInVec(userSession->RoomNum);
+		int32 packetSize = 0;
+		auto packet = WRITE_PU_S2C_SET_USER_POSITION(packetSize, nickname, sector);
+		for (auto &i : userRoom.Sessions)
+		{
+			if (i->nickname == nickname)
+				i->pos = mInitPos[sector - 1];
+			WriteTo(i->remoteAddress, i->port, packet, packetSize);
+		}
 
+		mLock.LeaveWriteLock();
+		break;
+	}
 	//Process of according to Protocol
 	}
 
@@ -401,7 +669,7 @@ shared_ptr<Session> SocketWorker::FindSession(char * remoteAddress, uint16 port)
 	//return shared_ptr<Session>();
 }
 
-auto SocketWorker::FindContentSession(int32 RoomNum)
+vector<shared_ptr<ContentSession>> SocketWorker::FindContentSession(int32 RoomNum)
 {
 	vector<shared_ptr<ContentSession>> returnVec;
 	for (auto &i : mContentSession)
@@ -428,7 +696,31 @@ SocketWorker::ContentSessions SocketWorker::FindContentSessionInVec(int32 RoomNu
 	return roomInfo;
 }
 
-void SocketWorker::GameStart()
+shared_ptr<ContentSession> SocketWorker::FindContetnSessionInVecByName(int32 RoomNum, string nickname)
+{
+	auto roomInfo = mContentSessionVec[RoomNum];
+	for (auto &i : roomInfo.Sessions)
+	{
+		if (i->nickname == nickname)
+		{
+			return i;
+		}
+	}
+	return nullptr;
+}
+
+bool SocketWorker::GunCheck(ContentSessions session, uint16 gunNum)
+{
+	for (auto i : session.Sessions)
+	{
+		if (i->gun != nullptr)
+			if(i->gun->gunNum == gunNum)
+				return false;
+	}
+	return true;
+}
+
+void SocketWorker::GameStart(vector<shared_ptr<SessionGun>> &guns)
 {
 	//Lock불필요->동시에 게임이 잡히는 경우 극히 드물것..
 	//필요할 경우 추후 write-read섞어서 구현하면됨
@@ -437,11 +729,12 @@ void SocketWorker::GameStart()
 	ROOM_NUM++;
 	auto RoomUsers = FindContentSession(OriginRoomNum);
 	SetUserPosition(RoomUsers);
-	vector<SessionGun> GunInfo = SetGunPosition();
+	auto roundInfo = SetRoundPosition();
+
+	int32 packetLength = 0;
+	auto packet = WRITE_PU_S2C_GAME_START(packetLength, RoomUsers, mInitPos[0], guns, roundInfo);
 	for (auto &i : RoomUsers)
 	{
-		int32 packetLength = 0;
-		auto packet = WRITE_PU_S2C_GAME_START(packetLength, RoomUsers, i->pos, GunInfo);
 		//WriteTo(i->remoteAddress, i->port, packet, packetLength);
 		mReliableHandle = CreateEvent(0, false, false, NULL);
 		ReliableProcess(i->remoteAddress, i->port, packet, packetLength);
@@ -450,23 +743,26 @@ void SocketWorker::GameStart()
 
 void SocketWorker::SetUserPosition(vector<shared_ptr<ContentSession>> &sessions)
 {
-	uint16 j = 0;
 	for (auto &i : sessions)
 	{
-		i->pos = mInitPos[j];
-		j++;
+		i->pos = mInitPos[0];
 	}
 }
 
-vector<SessionGun> SocketWorker::SetGunPosition()
+void SocketWorker::SetGunPosition()
 {
 	vector<SessionGun> sessionGun;
-	for (int32 i = 0; i < GUN_MAX_NUM; i++)
+	/*for (int32 i = 0; i < GUN_MAX_NUM; i++)
 	{
 		auto a = Position{ 270.0f, -28390.0f, 180.0f };
 		sessionGun.emplace_back(SessionGun{ a, Gun::NORMAL });
-	}
-	return sessionGun;
+	}*/
+	auto a = Position{ 270.0f, -28390.0f, 180.0f };
+	auto b = Position{ 53.0f, -26309.0f, 185.0f };
+	auto c = Position{ -20293.199219f, -12244.154297f , 360.351746f };
+	sessionGun.emplace_back(SessionGun{ a, Gun::NORMAL, 0 });
+	sessionGun.emplace_back(SessionGun{ b, Gun::NORMAL, 1 });
+	sessionGun.emplace_back(SessionGun{ c, Gun::NORMAL, 2 });
 }
 
 void SocketWorker::UserNotFound(char * remoteAddress, uint16 port)
@@ -523,4 +819,57 @@ RELIABLE:
 	}
 	CloseHandle(mReliableHandle);
 	mReliableHandle = NULL;
+}
+
+void SocketWorker::CheckUserDie(ContentSessions & checkVector, string nickname)
+{
+	int32 count = 0;
+	string winner;
+	for (auto &i : checkVector.Sessions)
+	{
+		if (i->hp > 0)
+		{
+			count++;
+			winner = i->nickname;
+		}
+	}
+	if (count == 1)
+	{
+		int32 packetSize = 0;
+		auto victoryPacket = WRITE_PU_S2C_USER_VICTORY(packetSize, winner);
+		for (auto &i : checkVector.Sessions)
+		{
+			WriteTo(i->remoteAddress, i->port, victoryPacket, packetSize);
+		}
+	}
+}
+
+vector<Position> SocketWorker::SetRoundPosition()
+{
+	random_device rd;
+	mt19937 gen(rd());
+
+	Position firstRound;
+	uniform_int_distribution<int> firstXRange(-10125, 10125);
+	int firstX = firstXRange(gen);
+	uniform_int_distribution<int> firstYRange(-10125, 10125);
+	int firstY = firstYRange(gen);
+	firstRound = Position{ (float)firstX, (float)firstY, 0 };
+
+	int secondXPos1 = firstX - 3375;
+	int secondXPos2 = firstX + 3375;
+	int secondYPos1 = firstY - 3375;
+	int secondYPos2 = firstY + 3375;
+
+	Position secondRound;
+	uniform_int_distribution<int> secondXRange(secondXPos1, secondXPos2);
+	int secondX = secondXRange(gen);
+	uniform_int_distribution<int> secondYRange(secondYPos1, secondYPos2);
+	int secondY = secondYRange(gen);
+	secondRound = Position{ (float)secondX, (float)secondY, 0 };
+
+	vector<Position> returnVec;
+	returnVec.push_back(firstRound);
+	returnVec.push_back(secondRound);
+	return returnVec;
 }

@@ -18,7 +18,7 @@
 #include <WinSock2.h>
 #include <string.h>
 
-const int32 MAX_BUFFER_LENGTH = 4096;
+const int32 MAX_BUFFER_LENGTH = 1024 * 10;
 
 using namespace std;
 

@@ -8,6 +8,8 @@ inline auto READ_PU_C2S_MOVE(const C2S_MOVE *packet, string &userName, Position 
 	vfront = packet->vfront();
 	vright = packet->vright();
 	vyaw = packet->vyaw();
+	isJump = packet->jump();
+	isCrouch = packet->crouch();
 }
 
 inline auto READ_PU_C2S_EXTEND_SESSION(const C2S_EXTEND_SESSION* packet, vector<shared_ptr<Session>> &sessions)
@@ -90,6 +92,39 @@ inline auto READ_PU_C2S_PICKUP_GUN(const C2S_PICKUP_GUN *packet, int32 &gunNum)
 	string nickname = packet->nickname()->c_str();
 	gunNum = packet->gunnum();
 	return nickname;
+}
+
+inline void READ_PU_C2S_SHOOT(const C2S_SHOOT *packet, string &nickname, string &target, float &damage)
+{
+	nickname = packet->nickname()->c_str();
+	target = packet->target()->c_str();
+	damage = packet->damage();
+}
+
+inline void READ_PU_C2S_MELEE_ATTACK(const C2S_MELEE_ATTACK *packet, string &nickname, string &target, int32 &combo)
+{
+	nickname = packet->nickname()->c_str();
+	target = packet->target()->c_str();
+	combo = packet->combo();
+}
+
+inline void READ_PU_C2S_EQUIP_GUN(const C2S_EQUIP_GUN *packet, string &nickname, bool &state)
+{
+	nickname = packet->nickname()->c_str();
+	state = packet->state();
+}
+
+inline void READ_PU_C2S_CHANGE_GUN(const C2S_CHANGE_GUN *packet, string &nickname, int32 &originID, int32 &nowID)
+{
+	nickname = packet->nickname()->c_str();
+	originID = packet->originid();
+	nowID = packet->nowid();
+}
+
+inline void READ_PU_C2S_SET_USER_POSITION(const C2S_SET_USER_POSITION *packet, string &nickname, int32 &sector)
+{
+	nickname = packet->nickname()->c_str();
+	sector = packet->sector();
 }
 
 //C2S Protocol Define
