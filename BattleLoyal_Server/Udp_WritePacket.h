@@ -298,3 +298,18 @@ inline auto WRITE_PU_S2C_START_SIGN(int32 &refLength, vector<shared_ptr<ContentS
 	builder.Clear();
 	return data;
 }
+
+inline auto WRITE_PU_S2C_ZONE_DAMAGE(int32 &refLength, string nickname, int32 damage)
+{
+	auto nickName = builder.CreateString(nickname);
+
+	auto makePacket = CreateS2C_ZONE_DAMAGE(builder, nickName, damage);
+	auto packet = CreateMessage(builder, MESSAGE_ID::MESSAGE_ID_S2C_ZONE_DAMAGE, makePacket.Union());
+
+	builder.Finish(packet);
+	refLength = builder.GetSize();
+
+	auto data = builder.GetBufferPointer();
+	builder.Clear();
+	return data;
+}

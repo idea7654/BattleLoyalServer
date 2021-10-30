@@ -31,7 +31,13 @@ void SocketWorker::Init()
 	
 	GunPos.push_back(Position{ 270.0f, -28390.0f, 180.0f });
 	GunPos.push_back(Position{ 53.0f, -26309.0f, 185.0f });
-	GunPos.push_back(Position{ -20293.199219f, -12244.154297f , 360.351746f });
+	GunPos.push_back(Position{ -20293.199219f, -12244.154297f , 271.0f });
+	GunPos.push_back(Position{ -20293.199219f, -13267.0f , 302.0f });
+	GunPos.push_back(Position{ -22627.914062f, -11673.779297f , 200.0f });
+	GunPos.push_back(Position{ -22967.089844f, -13350.819336f , 250.0f });
+	GunPos.push_back(Position{ -19108.0f, -13488.0f , 300.0f });
+	//GunPos.push_back(Position{ -19108.0f, -13488.0f , 300.0f });
+	//GunPos.push_back(Position{ -19108.0f, -13488.0f , 300.0f });
 
 	for (int32 i = 0; i < 8; i++) //8 WorkerThreads
 	{
@@ -363,6 +369,7 @@ RETRY:
 		else
 			break;
 
+		cout << nickname << ", " << gunNum;
 		auto packet = WRITE_PU_S2C_PICKUP_GUN(packetLen, nickname, gunNum);
 		mLock.LeaveWriteLock();
 
@@ -581,6 +588,52 @@ RETRY:
 		}
 
 		mLock.LeaveWriteLock();
+		break;
+	}
+	case MESSAGE_ID::MESSAGE_ID_C2S_ZONE_DAMAGE:
+	{
+		auto RecvData = static_cast<const C2S_ZONE_DAMAGE*>(message->packet());
+		string nickname;
+		int32 damage = 0;
+		int32 packetLen = 0;
+		mLock.EnterWriteLock();
+		READ_PU_C2S_ZONE_DAMAGE(RecvData, nickname, damage);
+		auto userSession = FindSession(nickname);
+		if (userSession == nullptr)
+		{
+			UserNotFound(remoteAddress, remotePort);
+			break;
+		}
+
+		auto userRoom = FindContentSessionInVec(userSession->RoomNum);
+		auto packet = WRITE_PU_S2C_ZONE_DAMAGE(packetLen, nickname, damage);
+
+		shared_ptr<ContentSession> user;
+		for (auto &i : userRoom.Sessions)
+		{
+			if (i->nickname == nickname)
+			{
+				i->hp -= damage;
+				if (i->hp < 0)
+				{
+					user = i;
+				}
+			}
+			WriteTo(i->remoteAddress, i->port, packet, packetLen);
+		}
+
+		if (user != nullptr)
+		{
+			int32 packetSize = 0;
+			auto diePacket = WRITE_PU_S2C_PLAYER_DIE(packetSize, "Zone", user->nickname, "Zone");
+			for (auto &i : userRoom.Sessions)
+			{
+				WriteTo(i->remoteAddress, i->port, diePacket, packetSize);
+			}
+		}
+
+		mLock.LeaveWriteLock();
+		CheckUserDie(userRoom, nickname);
 		break;
 	}
 	//Process of according to Protocol

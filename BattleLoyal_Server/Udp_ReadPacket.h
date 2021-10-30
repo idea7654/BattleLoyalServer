@@ -127,4 +127,9 @@ inline void READ_PU_C2S_SET_USER_POSITION(const C2S_SET_USER_POSITION *packet, s
 	sector = packet->sector();
 }
 
+inline void READ_PU_C2S_ZONE_DAMAGE(const C2S_ZONE_DAMAGE *packet, string &nickname, int32 &damage)
+{
+	nickname = packet->nickname()->c_str();
+	damage = packet->damage();
+}
 //C2S Protocol Define
