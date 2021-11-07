@@ -77,11 +77,12 @@ inline auto WRITE_PU_S2C_REGISTER_ERROR(int32 &refLength, string errMessage)
 	return data;
 }
 
-inline auto WRITE_PU_S2C_GAME_START(int32 &refLength, vector<shared_ptr<ContentSession>> &Users, Position pos, vector<shared_ptr<SessionGun>> &SessionGun, vector<Position> &RoundPos)
+inline auto WRITE_PU_S2C_GAME_START(int32 &refLength, vector<shared_ptr<ContentSession>> &Users, Position pos, vector<shared_ptr<SessionGun>> &SessionGun, vector<Position> &RoundPos, vector<shared_ptr<SessionRecover>> &recovers)
 {
 	vector<flatbuffers::Offset<InitUserInfo>> user_vector;
 	vector<flatbuffers::Offset<InitGunInfo>> gun_vector;
 	vector<flatbuffers::Offset<RoundInfo>> round_vector;
+	vector<flatbuffers::Offset<RecoverInfo>> recover_vector;
 	for (auto &i : Users)
 	{
 		auto UserNicks = builder.CreateString(i->nickname);
@@ -105,10 +106,19 @@ inline auto WRITE_PU_S2C_GAME_START(int32 &refLength, vector<shared_ptr<ContentS
 		auto makeTable = CreateRoundInfo(builder, round, &roundPos);
 		round_vector.push_back(makeTable);
 	}
+
+	for (auto &i : recovers)
+	{
+		int32 objNum = i->objNum;
+		auto objPos = Vec3(i->pos.x, i->pos.y, i->pos.z);
+		auto makeTable = CreateRecoverInfo(builder, objNum, &objPos);
+		recover_vector.push_back(makeTable);
+	}
 	auto datas = builder.CreateVector(user_vector);
 	auto guns = builder.CreateVector(gun_vector);
 	auto rounds = builder.CreateVector(round_vector);
-	auto makePacket = CreateS2C_GAME_START(builder, datas, guns, rounds);
+	auto recover = builder.CreateVector(recover_vector);
+	auto makePacket = CreateS2C_GAME_START(builder, datas, guns, rounds, recover);
 	auto packet = CreateMessage(builder, MESSAGE_ID::MESSAGE_ID_S2C_GAME_START, makePacket.Union());
 
 	builder.Finish(packet);
@@ -305,6 +315,21 @@ inline auto WRITE_PU_S2C_ZONE_DAMAGE(int32 &refLength, string nickname, int32 da
 
 	auto makePacket = CreateS2C_ZONE_DAMAGE(builder, nickName, damage);
 	auto packet = CreateMessage(builder, MESSAGE_ID::MESSAGE_ID_S2C_ZONE_DAMAGE, makePacket.Union());
+
+	builder.Finish(packet);
+	refLength = builder.GetSize();
+
+	auto data = builder.GetBufferPointer();
+	builder.Clear();
+	return data;
+}
+
+inline auto WRITE_PU_S2C_RECOVER_HP(int32 &refLength, int32 objNum, string nickname)
+{
+	auto nickName = builder.CreateString(nickname);
+
+	auto makePacket = CreateS2C_RECOVER_HP(builder, nickName, objNum);
+	auto packet = CreateMessage(builder, MESSAGE_ID::MESSAGE_ID_S2C_RECOVER_HP, makePacket.Union());
 
 	builder.Finish(packet);
 	refLength = builder.GetSize();

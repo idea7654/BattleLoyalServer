@@ -31,7 +31,9 @@ union MESSAGE_ID
   S2C_SET_USER_POSITION,
   S2C_START_SIGN,
   C2S_ZONE_DAMAGE,
-  S2C_ZONE_DAMAGE
+  S2C_ZONE_DAMAGE,
+  C2S_RECOVER_HP,
+  S2C_RECOVER_HP
 }
 
 struct Vec3{
@@ -141,6 +143,12 @@ table InitGunInfo
   pos: Vec3;
 }
 
+table RecoverInfo
+{
+  id: int;
+  pos: Vec3;
+}
+
 table RoundInfo
 {
   round: int;
@@ -152,6 +160,7 @@ table S2C_GAME_START
   userdata: [InitUserInfo];
   gundata: [InitGunInfo];
   rounddata: [RoundInfo];
+  recoverdata: [RecoverInfo];
 }
 
 table C2S_CANCEL_MATCHING
@@ -267,4 +276,16 @@ table S2C_ZONE_DAMAGE
 {
   nickname: string;
   damage: int;
+}
+
+table C2S_RECOVER_HP
+{
+  nickname: string;
+  obj: int;
+}
+
+table S2C_RECOVER_HP
+{
+  nickname: string;
+  obj: int;
 }

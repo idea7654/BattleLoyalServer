@@ -12,6 +12,12 @@ struct SessionGun
 	uint16 gunNum;
 };
 
+struct SessionRecover
+{
+	Position pos;
+	uint16 objNum;
+};
+
 struct ContentSession : Session
 {
 	Position pos;
@@ -31,6 +37,7 @@ public:
 	{
 		vector<shared_ptr<ContentSession>>	Sessions;
 		vector<shared_ptr<SessionGun>>		Guns;
+		vector<shared_ptr<SessionRecover>>  Recovers;
 		int32								ROOM_NUM;
 	};
 
@@ -51,7 +58,7 @@ public:
 	ContentSessions						FindContentSessionInVec(int32 RoomNum);
 	shared_ptr<ContentSession>			FindContetnSessionInVecByName(int32 RoomNum, string nickname);
 	bool								GunCheck(ContentSessions session, uint16 gunNum);
-	void								GameStart(vector<shared_ptr<SessionGun>> &guns);
+	void								GameStart(vector<shared_ptr<SessionGun>> &guns, vector<shared_ptr<SessionRecover>> &recovers);
 	void								SetUserPosition(vector<shared_ptr<ContentSession>> &sessions);
 	void								SetGunPosition();
 	void								UserNotFound(char* remoteAddress, uint16 port);
@@ -59,18 +66,20 @@ public:
 	void								ReliableProcess(char* remoteAddress, uint16 &remotePort, BYTE *data, DWORD dataLength);
 	void								CheckUserDie(ContentSessions &checkVector, string nickname);
 	vector<Position>					SetRoundPosition();
+	void								SessionOut(ContentSessions &checkVector, string nickname);
 private:
 	vector<thread>							mThreadPool;
 	vector<shared_ptr<Session>>				mUserSession;
 	vector<shared_ptr<ContentSession>>		mContentSession;
 	vector<ContentSessions>					mContentSessionVec;
 	vector<Position>						mInitPos;
-	uint16									ROOM_MAX_NUM = 1;
+	uint16									ROOM_MAX_NUM = 2;
 	uint16									GUN_MAX_NUM = 1;
 	uint16									ROOM_NUM = 0;
 	uint16									SESSION_REDUCE_TIME = 1000;
 	HANDLE									mReliableHandle;
 	//vector<shared_ptr<SessionGun>>		GunInfo;
 	vector<Position>						GunPos;
+	vector<Position>						mRecoverPos;
 };
 

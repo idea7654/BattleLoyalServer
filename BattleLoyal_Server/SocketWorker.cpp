@@ -35,9 +35,9 @@ void SocketWorker::Init()
 	GunPos.push_back(Position{ -20293.199219f, -13267.0f , 302.0f });
 	GunPos.push_back(Position{ -22627.914062f, -11673.779297f , 200.0f });
 	GunPos.push_back(Position{ -22967.089844f, -13350.819336f , 250.0f });
-	GunPos.push_back(Position{ -19108.0f, -13488.0f , 300.0f });
-	//GunPos.push_back(Position{ -19108.0f, -13488.0f , 300.0f });
-	//GunPos.push_back(Position{ -19108.0f, -13488.0f , 300.0f });
+	GunPos.push_back(Position{ -19108.0f, -13488.0f , 300.0f }); //Gun pos
+	
+	mRecoverPos.push_back(Position{ -11680.0f, -11480.0f, 80.0f });
 
 	for (int32 i = 0; i < 8; i++) //8 WorkerThreads
 	{
@@ -233,6 +233,7 @@ RETRY:
 		mLock.EnterWriteLock();
 		auto returnData = READ_PU_C2S_REQUEST_REGISTER(RecvData, remoteAddress, remotePort);
 
+		cout << returnData << endl;
 		if (returnData)
 		{
 			int32 Success = 0;
@@ -290,10 +291,18 @@ RETRY:
 				newSession->gunNum = i;
 				GunInfo.push_back(newSession);
 			}
+			vector<shared_ptr<SessionRecover>> RecoverInfo;
+			for (int32 i = 0; i < mRecoverPos.size(); i++)
+			{
+				auto newSession = MakeShared<SessionRecover>();
+				newSession->pos = mRecoverPos[i];
+				newSession->objNum = i;
+				RecoverInfo.push_back(newSession);
+			}
 			mLock.LeaveWriteLock();
-			GameStart(GunInfo);
+			GameStart(GunInfo, RecoverInfo);
 			mLock.EnterWriteLock();
-			mContentSessionVec.push_back(ContentSessions{mContentSession, GunInfo, ROOM_NUM - 1 });
+			mContentSessionVec.push_back(ContentSessions{mContentSession, GunInfo, RecoverInfo, ROOM_NUM - 1 });
 			mContentSession.clear();
 			int32 MyRoomNum = ROOM_NUM - 1;
 			mLock.LeaveWriteLock();
@@ -417,6 +426,7 @@ RETRY:
 						{
 							WriteTo(i->remoteAddress, i->port, diePacket, packetLength);
 						}
+						SessionOut(userRoom, i->nickname);
 					}
 					else {
 						for (auto &i : userRoom.Sessions)
@@ -485,6 +495,7 @@ RETRY:
 						{
 							WriteTo(i->remoteAddress, i->port, diePacket, packetLength);
 						}
+						SessionOut(userRoom, target);
 					}
 					else {
 						for (auto &i : userRoom.Sessions)
@@ -607,7 +618,7 @@ RETRY:
 
 		auto userRoom = FindContentSessionInVec(userSession->RoomNum);
 		auto packet = WRITE_PU_S2C_ZONE_DAMAGE(packetLen, nickname, damage);
-
+		
 		shared_ptr<ContentSession> user;
 		for (auto &i : userRoom.Sessions)
 		{
@@ -618,7 +629,12 @@ RETRY:
 				{
 					user = i;
 				}
+				break;
 			}
+		}
+
+		for (auto &i : userRoom.Sessions)
+		{
 			WriteTo(i->remoteAddress, i->port, packet, packetLen);
 		}
 
@@ -630,10 +646,70 @@ RETRY:
 			{
 				WriteTo(i->remoteAddress, i->port, diePacket, packetSize);
 			}
+			SessionOut(userRoom, user->nickname);
+			//유저 죽은거 처리->Session에서 빼버리기
 		}
 
 		mLock.LeaveWriteLock();
 		CheckUserDie(userRoom, nickname);
+		break;
+	}
+	case MESSAGE_ID::MESSAGE_ID_C2S_RECOVER_HP:
+	{
+		auto RecvData = static_cast<const C2S_RECOVER_HP*>(message->packet());
+		string nickname;
+		int32 objID = 0;
+		int32 packetSize = 0;
+		mLock.EnterWriteLock();
+		READ_PU_C2S_RECOVER_HP(RecvData, nickname, objID);
+		auto userSession = FindSession(nickname);
+		if (userSession == nullptr)
+		{
+			UserNotFound(remoteAddress, remotePort);
+			break;
+		}
+
+		auto userRoom = FindContentSessionInVec(userSession->RoomNum);
+		auto packet = WRITE_PU_S2C_RECOVER_HP(packetSize, objID, nickname);
+
+		shared_ptr<SessionRecover> removeObj;
+		bool isValid = false;
+		for (auto &i : userRoom.Recovers)
+		{
+			if (i->objNum == objID)
+			{
+				removeObj = i;
+				isValid = true;
+				break;
+			}
+		}
+
+		if (isValid)
+		{
+			if (removeObj)
+			{
+				userRoom.Recovers.erase(remove_if(userRoom.Recovers.begin(), userRoom.Recovers.end(), [removeObj](shared_ptr<SessionRecover> userData) {
+					return userData->objNum == removeObj->objNum;
+					}), userRoom.Recovers.end());
+			}
+			for (auto &i : userRoom.Sessions)
+			{
+				if (i->nickname == nickname)
+				{
+					i->hp += 20;
+					if (i->hp > 100)
+						i->hp = 100;
+					break;
+				}
+			}
+		}
+		
+		for (auto &i : userRoom.Sessions)
+		{
+			WriteTo(i->remoteAddress, i->port, packet, packetSize);
+		}
+	
+		mLock.LeaveWriteLock();
 		break;
 	}
 	//Process of according to Protocol
@@ -773,7 +849,7 @@ bool SocketWorker::GunCheck(ContentSessions session, uint16 gunNum)
 	return true;
 }
 
-void SocketWorker::GameStart(vector<shared_ptr<SessionGun>> &guns)
+void SocketWorker::GameStart(vector<shared_ptr<SessionGun>> &guns, vector<shared_ptr<SessionRecover>> &recovers)
 {
 	//Lock불필요->동시에 게임이 잡히는 경우 극히 드물것..
 	//필요할 경우 추후 write-read섞어서 구현하면됨
@@ -785,7 +861,7 @@ void SocketWorker::GameStart(vector<shared_ptr<SessionGun>> &guns)
 	auto roundInfo = SetRoundPosition();
 
 	int32 packetLength = 0;
-	auto packet = WRITE_PU_S2C_GAME_START(packetLength, RoomUsers, mInitPos[0], guns, roundInfo);
+	auto packet = WRITE_PU_S2C_GAME_START(packetLength, RoomUsers, mInitPos[0], guns, roundInfo, recovers);
 	for (auto &i : RoomUsers)
 	{
 		//WriteTo(i->remoteAddress, i->port, packet, packetLength);
@@ -925,4 +1001,29 @@ vector<Position> SocketWorker::SetRoundPosition()
 	returnVec.push_back(firstRound);
 	returnVec.push_back(secondRound);
 	return returnVec;
+}
+
+void SocketWorker::SessionOut(ContentSessions & checkVector, string nickname)
+{
+	shared_ptr<ContentSession> logoutUser;
+	for (auto &i : checkVector.Sessions)
+	{
+		if (i->nickname == nickname)
+		{
+			logoutUser = i;
+		}
+	}
+
+	if (logoutUser != nullptr)
+	{
+		checkVector.Sessions.erase(remove_if(checkVector.Sessions.begin(), checkVector.Sessions.end(), [logoutUser](shared_ptr<ContentSession> userData) {
+			return logoutUser->nickname == userData->nickname;
+		}), checkVector.Sessions.end());
+		if (checkVector.Sessions.size() <= 0)
+		{
+			mContentSessionVec.erase(remove_if(mContentSessionVec.begin(), mContentSessionVec.end(), [checkVector](ContentSessions userData) {
+				return userData.ROOM_NUM == checkVector.ROOM_NUM;
+			}), mContentSessionVec.end());
+		}
+	}
 }

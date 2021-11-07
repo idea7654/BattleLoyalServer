@@ -32,11 +32,20 @@ public:
 		}
 		//¶ô °É±â
 		Result = mysql_store_result(ConnPtr);
-		if (Result->row_count == 0)
+		if (Result)
 		{
-			isSuccess = false;
-			return Result;
+			if (Result->row_count == 0)
+			{
+				isSuccess = false;
+				return Result;
+			}
 		}
+		else
+		{
+			isSuccess = true;
+			return (MYSQL_RES*)1;
+		}
+		
 		mysql_free_result(Result);
 		isSuccess = true;
 		return Result;

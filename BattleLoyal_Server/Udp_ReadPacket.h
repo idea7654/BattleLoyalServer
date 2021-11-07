@@ -132,4 +132,10 @@ inline void READ_PU_C2S_ZONE_DAMAGE(const C2S_ZONE_DAMAGE *packet, string &nickn
 	nickname = packet->nickname()->c_str();
 	damage = packet->damage();
 }
+
+inline void READ_PU_C2S_RECOVER_HP(const C2S_RECOVER_HP *packet, string &nickname, int32 &objID)
+{
+	nickname = packet->nickname()->c_str();
+	objID = packet->obj();
+}
 //C2S Protocol Define
