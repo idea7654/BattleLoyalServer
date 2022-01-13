@@ -42,11 +42,11 @@ public:
 	};
 
 public:
-	void						Init();
-	void						ReadEvent();
-	void						WriteEvent();
-	void						ThreadManage();
-	bool						CheckPacketNum(shared_ptr<Session> &session, uint32 PacketNumber);
+	virtual void				Init() override;
+	virtual void				ReadEvent() override;
+	virtual void				WriteEvent() override;
+	virtual void				ThreadManage() override;
+	virtual bool				CheckPacketNum(shared_ptr<Session> &session, uint32 PacketNumber) override;
 
 public:
 	void								ReduceSessionTime();
@@ -73,7 +73,7 @@ private:
 	vector<shared_ptr<ContentSession>>		mContentSession;
 	vector<ContentSessions>					mContentSessionVec;
 	vector<Position>						mInitPos;
-	uint16									ROOM_MAX_NUM = 2;
+	uint16									ROOM_MAX_NUM = 1;
 	uint16									GUN_MAX_NUM = 1;
 	uint16									ROOM_NUM = 0;
 	uint16									SESSION_REDUCE_TIME = 1000;

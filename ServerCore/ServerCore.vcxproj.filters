@@ -62,9 +62,6 @@
     <ClCompile Include="CorePch.cpp">
       <Filter>Main</Filter>
     </ClCompile>
-    <ClCompile Include="MemoryPool.cpp">
-      <Filter>Memory</Filter>
-    </ClCompile>
     <ClCompile Include="CoreGlobal.cpp">
       <Filter>Main</Filter>
     </ClCompile>

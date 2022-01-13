@@ -36,6 +36,7 @@ void SocketWorker::Init()
 	GunPos.push_back(Position{ -22627.914062f, -11673.779297f , 200.0f });
 	GunPos.push_back(Position{ -22967.089844f, -13350.819336f , 250.0f });
 	GunPos.push_back(Position{ -19108.0f, -13488.0f , 300.0f }); //Gun pos
+	GunPos.push_back(Position{ 17017.322266f, -17165.876953f, 176.05896f });
 	
 	mRecoverPos.push_back(Position{ -11680.0f, -11480.0f, 80.0f });
 
@@ -281,6 +282,7 @@ RETRY:
 
 		if (mContentSession.size() == ROOM_MAX_NUM)
 		{
+			cout << "Game Start!" << endl;
 			mLock.EnterWriteLock();
 			vector<shared_ptr<SessionGun>> GunInfo;
 			for (int32 i = 0; i < GunPos.size(); i++)
@@ -400,7 +402,6 @@ RETRY:
 
 		mLock.EnterWriteLock();
 		READ_PU_C2S_SHOOT(RecvData, nickname, target, damage);
-
 		auto userSession = FindSession(nickname);
 
 		if (userSession == nullptr)
@@ -435,7 +436,7 @@ RETRY:
 						}
 					}
 					//Sleep(300);
-					//CheckUserDie(userRoom, nickname);
+					CheckUserDie(userRoom, nickname);
 					break;
 				}
 			}
@@ -864,9 +865,9 @@ void SocketWorker::GameStart(vector<shared_ptr<SessionGun>> &guns, vector<shared
 	auto packet = WRITE_PU_S2C_GAME_START(packetLength, RoomUsers, mInitPos[0], guns, roundInfo, recovers);
 	for (auto &i : RoomUsers)
 	{
-		//WriteTo(i->remoteAddress, i->port, packet, packetLength);
-		mReliableHandle = CreateEvent(0, false, false, NULL);
-		ReliableProcess(i->remoteAddress, i->port, packet, packetLength);
+		WriteTo(i->remoteAddress, i->port, packet, packetLength);
+		//mReliableHandle = CreateEvent(0, false, false, NULL);
+		//ReliableProcess(i->remoteAddress, i->port, packet, packetLength);
 	}
 }
 
@@ -964,6 +965,7 @@ void SocketWorker::CheckUserDie(ContentSessions & checkVector, string nickname)
 	}
 	if (count == 1)
 	{
+		Sleep(500);
 		int32 packetSize = 0;
 		auto victoryPacket = WRITE_PU_S2C_USER_VICTORY(packetSize, winner);
 		for (auto &i : checkVector.Sessions)

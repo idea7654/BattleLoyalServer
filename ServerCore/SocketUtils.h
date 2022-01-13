@@ -11,6 +11,12 @@ public:
 	bool		Bind(uint16 port);
 	bool		RecvFrom();
 	bool		WriteTo(char* remoteAddress, uint16 &remotePort, BYTE *data, DWORD dataLength);
+
+	virtual void	Init();
+	virtual void	ReadEvent();
+	virtual void	WriteEvent();
+	virtual void	ThreadManage();
+	virtual bool	CheckPacketNum(shared_ptr<Session> &session, uint32 PacketNumber);
 	
 public:
 	CircleQueue		mReadQueue;

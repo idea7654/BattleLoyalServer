@@ -128,3 +128,24 @@ bool SocketUtils::WriteTo(char * remoteAddress, uint16 & remotePort, BYTE* data,
 	SetEvent(mWriteEvent);
 	return true;
 }
+
+void SocketUtils::Init()
+{
+}
+
+void SocketUtils::ReadEvent()
+{
+}
+
+void SocketUtils::WriteEvent()
+{
+}
+
+void SocketUtils::ThreadManage()
+{
+}
+
+bool SocketUtils::CheckPacketNum(shared_ptr<Session>& session, uint32 PacketNumber)
+{
+	return true;
+}

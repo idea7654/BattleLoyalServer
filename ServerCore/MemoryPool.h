@@ -51,30 +51,3 @@ protected:
 };
 template <typename T>
 BYTE* MemoryPool<T>::mFreePointer;
-
-/*
-class MemoryPool
-{
-public:
-	struct MEMORY_DESC
-	{
-		BYTE	*pBuffer;
-		bool	isUsing;
-		size_t	Index;
-	};
-
-private:
-	vector<MEMORY_DESC>		pools;
-	HANDLE					hEvent;
-
-public:
-	MemoryPool(size_t PoolSize, size_t MemorySize);
-	~MemoryPool();
-
-private:
-	int32				 freeMemIndex;
-public:
-	MEMORY_DESC			*Alloc();
-	void				Release(MEMORY_DESC *pMD);
-};
-*/
